@@ -1,11 +1,12 @@
 import csv
 import itertools
+from os.path import isfile
 import numpy as np
 import nltk
 import sys
 import operator
 import theano
-from gru_blackout import GRUTheano
+from gru_nce import GRUTheano
 
 SENTENCE_START_TOKEN = "SENTENCE_START"
 SENTENCE_END_TOKEN = "SENTENCE_END"
@@ -43,7 +44,7 @@ def Q_w(word_to_index,vocab,alpha):
 
     return np.asarray(q_w,dtype=theano.config.floatX)
 
-def blackout(q_dis,k,i):
+def nce(q_dis,k,i):
     """
     sampling K negative word from q_dis, Sk != i
     """
@@ -65,13 +66,16 @@ def negative_sample(y_train_i,k,q_dis):
     """
     neg_m = []
     for i in y_train_i:
-        neg_m.append(blackout(q_dis,k,i))
+        neg_m.append(nce(q_dis,k,i))
 
     return np.asarray(neg_m)
 
 
 def load_data(filename="data/reddit-comments-2015-08.csv", vocabulary_size=2000, min_sent_characters=0):
-
+    if isfile('data/dataset.pkl'):
+        with open('data/dataset.pkl')as f:
+            (X_train, y_train, word_to_index, index_to_word, sorted_vocab)=pickle.load(f)
+            return X_train, y_train, word_to_index, index_to_word, sorted_vocab
     word_to_index = []
     index_to_word = []
 
@@ -121,6 +125,8 @@ def load_data(filename="data/reddit-comments-2015-08.csv", vocabulary_size=2000,
     X_train = np.asarray([[word_to_index[w] for w in sent[:-1]] for sent in tokenized_sentences])
     y_train = np.asarray([[word_to_index[w] for w in sent[1:]] for sent in tokenized_sentences])
 
+    with open('data/dataset.pkl','w')as f:
+        pickle.dump((X_train, y_train, word_to_index, index_to_word, sorted_vocab),f)
     return X_train, y_train, word_to_index, index_to_word, sorted_vocab
 
 
@@ -132,8 +138,9 @@ def train_with_sgd(model, X_train, y_train, k, q_dis, q_w, learning_rate=0.001, 
         print epoch
         for i in np.random.permutation(len(y_train)):
             # One SGD step
-            print num_examples_seen," ",
-            model.sgd_step(X_train[i], y_train[i], negative_sample(y_train[i],k,q_dis), q_w, learning_rate, decay)
+            
+            cost=model.sgd_step(X_train[i], y_train[i], negative_sample(y_train[i],k,q_dis), q_w, learning_rate, decay)
+            print cost,' ',
             num_examples_seen += 1
     return model
 

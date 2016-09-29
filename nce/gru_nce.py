@@ -71,26 +71,23 @@ class GRUTheano:
             # probability of output o_t
             # o_t = T.nnet.softmax(V.dot(s_t2) + c)[0]
 
-            # blackout version output probability
+            # noise contrastive estimation version output probability
 
             # correct word probability (1,1)
             c_o_t = T.exp(V[y_t].dot(s_t2)+c[y_t])
 
-            # negative word probability (k,1)
-            n_o_t = T.exp(V[neg_y_t].dot(s_t2)+c[neg_y_t])
-
             # sample set probability
-            t_o = (q_w[y_t]*c_o_t) + T.sum(q_w[neg_y_t]*n_o_t)
+            t_o = c_o_t + T.sum(q_w[neg_y_t])
 
-            # 
-            c_o_p = q_w[y_t]*c_o_t / t_o
+            # positive probability
+            c_o_p = c_o_t / t_o
 
             # negative probability (k,1)
-            n_o_p = q_w[neg_y_t]*n_o_t  / t_o
+            n_o_p = q_w[neg_y_t]  / t_o
 
 
             # cost for each y in blackout
-            J_dis = T.log(c_o_p) + T.sum(T.log(T.ones_like(n_o_p)-n_o_p))
+            J_dis = T.log(c_o_p) + T.sum(T.log(n_o_p))
 
             # blackout version discriminative objective function
             return [J_dis, s_t1, s_t2]
@@ -139,7 +136,7 @@ class GRUTheano:
 
         self.sgd_step = theano.function(
             [x, y, negy, q_w, learning_rate, theano.In(decay, value=0.9)],
-            [], 
+            cost, 
             updates=[(E, E - learning_rate * dE / T.sqrt(mE + 1e-6)),
                      (U, U - learning_rate * dU / T.sqrt(mU + 1e-6)),
                      (W, W - learning_rate * dW / T.sqrt(mW + 1e-6)),

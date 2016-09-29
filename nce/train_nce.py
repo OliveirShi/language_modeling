@@ -1,9 +1,9 @@
 import os
 import numpy as np
 import time
-from utils_blackout import *
+from utils_nce import *
 from datetime import datetime
-from gru_blackout import GRUTheano
+from gru_nce import GRUTheano
 
 
 LEARNING_RATE = float(os.environ.get("LEARNING_RATE", "0.001"))
