@@ -3,6 +3,8 @@ import itertools
 import numpy as np
 import nltk
 import sys
+from os.path import isfile
+import cPickle as pickle
 import operator
 import theano
 from gru_blackout import GRUTheano
@@ -71,6 +73,10 @@ def negative_sample(y_train_i,k,q_dis):
 
 
 def load_data(filename="data/reddit-comments-2015-08.csv", vocabulary_size=2000, min_sent_characters=0):
+    if isfile('data/dataset.pkl'):
+        with open('data/dataset.pkl')as f:
+            (X_train, y_train, word_to_index, index_to_word, sorted_vocab)=pickle.load(f)
+            return X_train, y_train, word_to_index, index_to_word, sorted_vocab
 
     word_to_index = []
     index_to_word = []
@@ -121,6 +127,11 @@ def load_data(filename="data/reddit-comments-2015-08.csv", vocabulary_size=2000,
     X_train = np.asarray([[word_to_index[w] for w in sent[:-1]] for sent in tokenized_sentences])
     y_train = np.asarray([[word_to_index[w] for w in sent[1:]] for sent in tokenized_sentences])
 
+    if isfile('data/dataset.pkl'):
+        with open('data/dataset.pkl')as f:
+            (X_train, y_train, word_to_index, index_to_word, sorted_vocab)=pickle.load(f)
+            return X_train, y_train, word_to_index, index_to_word, sorted_vocab
+
     return X_train, y_train, word_to_index, index_to_word, sorted_vocab
 
 
@@ -132,8 +143,8 @@ def train_with_sgd(model, X_train, y_train, k, q_dis, q_w, learning_rate=0.001, 
         print epoch
         for i in np.random.permutation(len(y_train)):
             # One SGD step
-            print num_examples_seen," ",
-            model.sgd_step(X_train[i], y_train[i], negative_sample(y_train[i],k,q_dis), q_w, learning_rate, decay)
+            cost=model.sgd_step(X_train[i], y_train[i], negative_sample(y_train[i],k,q_dis), q_w, learning_rate, decay)            
+            print cost,
             num_examples_seen += 1
     return model
 

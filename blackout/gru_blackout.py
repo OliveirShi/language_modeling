@@ -90,7 +90,7 @@ class GRUTheano:
 
 
             # cost for each y in blackout
-            J_dis = T.log(c_o_p) + T.sum(T.log(T.ones_like(n_o_p)-n_o_p))
+            J_dis = -(T.log(c_o_p) + T.sum(T.log(T.ones_like(n_o_p)-n_o_p)))
 
             # blackout version discriminative objective function
             return [J_dis, s_t1, s_t2]
@@ -139,7 +139,7 @@ class GRUTheano:
 
         self.sgd_step = theano.function(
             [x, y, negy, q_w, learning_rate, theano.In(decay, value=0.9)],
-            [], 
+            cost, 
             updates=[(E, E - learning_rate * dE / T.sqrt(mE + 1e-6)),
                      (U, U - learning_rate * dU / T.sqrt(mU + 1e-6)),
                      (W, W - learning_rate * dW / T.sqrt(mW + 1e-6)),
