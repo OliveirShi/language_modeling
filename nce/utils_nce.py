@@ -4,6 +4,7 @@ from os.path import isfile
 import numpy as np
 import nltk
 import sys
+import cPickle as pickle
 import operator
 import theano
 from gru_nce import GRUTheano
@@ -140,7 +141,7 @@ def train_with_sgd(model, X_train, y_train, k, q_dis, q_w, learning_rate=0.001, 
             # One SGD step
             
             cost=model.sgd_step(X_train[i], y_train[i], negative_sample(y_train[i],k,q_dis), q_w, learning_rate, decay)
-            print cost,' ',
+            print cost,'\t',
             num_examples_seen += 1
     return model
 

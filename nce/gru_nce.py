@@ -80,14 +80,14 @@ class GRUTheano:
             t_o = c_o_t + T.sum(q_w[neg_y_t])
 
             # positive probability
-            c_o_p = c_o_t / t_o
+            c_o_p = c_o_t / t_o  
 
             # negative probability (k,1)
             n_o_p = q_w[neg_y_t]  / t_o
 
 
             # cost for each y in blackout
-            J_dis = T.log(c_o_p) + T.sum(T.log(n_o_p))
+            J_dis = -(T.log(c_o_p) + T.sum(T.log(n_o_p)))
 
             # blackout version discriminative objective function
             return [J_dis, s_t1, s_t2]
