@@ -58,7 +58,7 @@ class GRU:
 
         def _recurrence(x_t,m,h_tm1):
             x_e=self.E[:,x_t]
-            concated=T.concatenated([x_e,h_tm1])
+            concated=T.concatenate([x_e,h_tm1])
 
             # Update gate
             z_t=self.f(T.dot(self.Wz, concated) + self.bz )

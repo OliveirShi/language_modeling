@@ -1,6 +1,6 @@
 import numpy as np
 import theano
-import theano.tensor as T
+from theano.tensor.shared_randomstreams import RandomStreams
 
 from softmax import *
 from gru import *
@@ -8,7 +8,7 @@ from lstm import *
 from updates import *
 
 class RNNLM:
-    def __init__(self,n_input,n_hidden,n_output,E,cell='gru',optimizer='sgd',p=0.5):
+    def __init__(self,n_input,n_hidden,n_output,cell='gru',optimizer='sgd',p=0.5):
         self.x=T.tensor3('x')
         self.maskx=T.matrix('maskx')
         self.y=T.tensor3('y')
@@ -17,7 +17,11 @@ class RNNLM:
         self.n_input=n_input
         self.n_hidden=n_hidden
         self.n_output=n_output
-        self.E=E
+        init_Embd=np.asarray(np.random.uniform(low=-np.sqrt(1./n_output),
+                                             high=np.sqrt(1./n_output),
+                                             size=(n_output,n_input)),
+                           dtype=theano.config.floatX)
+        self.E=theano.shared(value=init_Embd,name='word_embedding')
 
         self.cell=cell
         self.optimizer=optimizer
@@ -26,6 +30,7 @@ class RNNLM:
         self.n_batch=T.iscalar('n_batch')
 
         self.epsilon=1.0e-15
+        self.rng=RandomStreams(1234)
         self.build()
 
     def build(self):
@@ -45,7 +50,7 @@ class RNNLM:
         prediction=output_layer.prediction
         self.params=self.E+hidden_layer.params+output_layer.params
 
-        cost=self.categorical_cross_entropy(output_layer.activation,self.y)
+        cost=self.categorical_crossentropy(output_layer.activation,self.y)
 
    
         lr=T.scalar("lr")
@@ -64,6 +69,6 @@ class RNNLM:
     def categorical_crossentropy(self,y_pred,y_true):
         y_pred=T.clip(y_pred,self.epsilon,1.0-self.epsilon)
         
-        nll=T.nnet.categorial_crossentropy(y_pred,y_true)
+        nll=T.nnet.categorical_crossentropy(y_pred,y_true)
         return T.sum(nll*self.masky)/T.sum(self.masky)
     

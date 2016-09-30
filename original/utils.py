@@ -34,10 +34,9 @@ def fopen(filename,mode='r'):
 
 class TextIterator:
     def __init__(self,source,source_dict,n_batch,maxlen,n_words_source=-1):
-        if source.endwith('gz'):
-            self.source=gzip.open(source,'r')
-        else:
-            self.source=open(source,'r')
+
+        with open(source,'rb')as f:
+            self.source=pickle.load(file(source))
         with open(source_dict,'rb')as f:
             self.source_dict=pickle.load(f)
 
@@ -107,11 +106,7 @@ def prepare_data(seqs_x):
 
 
 
-def load_data(filename="data/reddit-comments-2015-08.csv", vocabulary_size=2000, min_sent_characters=0):
-    if isfile('data/dataset.pkl'):
-        with open('data/dataset.pkl')as f:
-            (x, maskx,y,masky, word_to_index, index_to_word, sorted_vocab)=pickle.load(f)
-            return x, maskx,y,masky, word_to_index, index_to_word, sorted_vocab
+def gengerate_data(filename="data/reddit-comments-2015.csv", vocabulary_size=2000, min_sent_characters=0):
 
     word_to_index = []
     index_to_word = []
@@ -147,8 +142,6 @@ def load_data(filename="data/reddit-comments-2015-08.csv", vocabulary_size=2000,
 
     sorted_vocab = sorted(vocab, key=operator.itemgetter(1))
 
-    # concern about blackout algorithm
-    sorted_vocab.append(("<MASK/>",1))
     sorted_vocab.append((UNKNOWN_TOKEN,1))
 
     index_to_word = [x[0] for x in sorted_vocab]
@@ -160,12 +153,15 @@ def load_data(filename="data/reddit-comments-2015-08.csv", vocabulary_size=2000,
 
     # Create the training data
     x = np.asarray([[word_to_index[w] for w in sent[:-1]] for sent in tokenized_sentences])
-    maskx = np.asarray([[1 for w in sent[:-1]] for sent in tokenized_sentences])
-    y = np.asarray([[word_to_index[w] for w in sent[1:]] for sent in tokenized_sentences])
-    masky= np.asarray([[1 for w in sent[1:]] for sent in tokenized_sentences])
 
-    with open('data/dataset.pkl')as f:
-        pickle.dump((x,maskx,y,masky, word_to_index, index_to_word, sorted_vocab),f)
+    with open('data/dataset.pkl','wb')as f:
+        pickle.dump(x,f)
+    with open('data/word2index.pkl','wb')as f:
+        pickle.dump(word_to_index,f)
+    with open('data/index2word.pkl','wb')as f:
+        pickle.dump(index_to_word,f)
+    with open('data/vocab.pkl','wb')as f:
+        pickle.dump( sorted_vocab,f)
 
-    return x, maskx,y,masky, word_to_index, index_to_word, sorted_vocab
+
 
