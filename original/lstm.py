@@ -3,14 +3,22 @@ import theano
 import theano.tensor as T
 
 class LSTM:
-    def __init__(self,n_input,n_hidden,x,E,mask,is_train=1,n_batch=2,p=0.5):
+    def __init__(self,rng,
+                 n_input,n_hidden,
+                 x,E,mask,
+                 is_train=1,p=0.5):
+        self.rng=rng
+
         self.n_input=n_input
         self.n_hidden=n_hidden
-        self.f=T.nnet.sigmoid
 
         self.x=x
         self.E=E
         self.mask=mask
+        self.is_train=is_train
+        self.p=p
+
+        self.f=T.nnet.sigmoid
 
         # Forget gate params
         init_Wf=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
@@ -71,7 +79,7 @@ class LSTM:
             return [h_t, c_t]
         '''
         def _recurrence(x_t,m,h_tm1,c_tm1):
-            x_e=sel.E[:,x_t]
+            x_e=self.E[:,x_t]
             concated=T.concatenate([x_e,h_tm1])
 
             # Forget gate
@@ -101,12 +109,12 @@ class LSTM:
                                          dict(initial=T.zeros(self.n_hidden))])
 
         # Dropout
-        if p>0:
-            seng=T.shared_randomstreams.RandomStreams(self.rng.randint(99999))
-            drop_mask=srng.binomial(n=1,p=1-p,size=h.shape,dtype=theano.config.floatX)
-            self.activation=T.switch(T.eq(is_train,1),h*drop_mask,h*(1-p))
+        if self.p>0:
+            srng=T.shared_randomstreams.RandomStreams(self.rng.randint(99999))
+            drop_mask=srng.binomial(n=1,p=1-self.p,size=h.shape,dtype=theano.config.floatX)
+            self.activation=T.switch(T.eq(self.is_train,1),h*drop_mask,h*(1-p))
         else:
-            self.activation=T.switch(T.eq(is_train,1),h,h)
+            self.activation=T.switch(T.eq(self.is_train,1),h,h)
         
 
         

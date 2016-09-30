@@ -11,7 +11,7 @@ class softmax:
 
         init_W=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
-                                             size=(n_output,n_hidden)))
+                                             size=(n_output,n_output)))
         init_b=np.zeros((n_output),dtype=theano.config.floatX)
 
         self.W=theano.shared(value=init_W,name='W')

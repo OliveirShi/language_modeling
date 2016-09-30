@@ -3,7 +3,12 @@ import theano
 import theano.tensor as T
 
 class GRU:
-    def __init__(self,n_input,n_hidden,x,E,mask,is_train=1,n_batch=2,p=0.5,rng):
+    def __init__(self,rng,
+                 n_input,n_hidden,
+                 x,E,mask,
+                 is_train=1,p=0.5):
+        self.rng=rng
+
         self.n_input=n_input
         self.n_hidden=n_hidden
         self.f=T.nnet.sigmoid
@@ -11,7 +16,7 @@ class GRU:
         self.x=x
         self.E=E
         self.mask=mask
-        self.rng=rng
+        self.p=p
 
         # Update gate
         init_Wz=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
@@ -53,7 +58,7 @@ class GRU:
 
         def _recurrence(x_t,m,h_tm1):
             x_e=self.E[:,x_t]
-            contated=T.concatenated([x_e,h_tm1])
+            concated=T.concatenated([x_e,h_tm1])
 
             # Update gate
             z_t=self.f(T.dot(self.Wz, concated) + self.bz )
@@ -76,12 +81,12 @@ class GRU:
                             outputs_info=[dict(init=T.zeros(self.n_hidden))])
 
         # Dropout
-        if p>0:
+        if self.p>0:
             srng=T.shared_randomstreams.RandomStreams(self.rng.randint(99999))
-            drop_mask=srng.binomial(n=1,p=1-p,size=h.shape,dtype=theano.config.floatX)
-            self.activation=T.switch(T.eq(is_train,1),h*drop_mask,h*(1-p))            
+            drop_mask=srng.binomial(n=1,p=1-self.p,size=h.shape,dtype=theano.config.floatX)
+            self.activation=T.switch(T.eq(self.is_train,1),h*drop_mask,h*(1-p))
         else:
-            self.activation=T.switch(T.eq(is_train,1),h,h)
+            self.activation=T.switch(T.eq(self.is_train,1),h,h)
             
                 
         

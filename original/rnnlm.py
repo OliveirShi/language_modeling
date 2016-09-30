@@ -28,14 +28,20 @@ class RNNLM:
         self.build()
         
 
-    def build():
+    def build(self):
         rng=np.random.RandomState(1234)
         if self.cell=='gru':
-            hidden_layer=gru(n_input,n_hidden,self.x,self.E,self.maskx,self.is_train,self.n_batch,self.p,self.rng)
+            hidden_layer=GRU(self.rng,
+                             self.n_input,self.n_hidden,
+                             self.x,self.E,self.maskx,
+                             self.is_train,self.p)
         else:
-            hidden_layer=lstm(n_input,n_hidden,self.x,self.E,self.maskx,self.is_train,self.n_batch,self.p,self.rng)
+            hidden_layer=LSTM(self.rng,
+                              self.n_input,self.n_hidden,
+                              self.x,self.E,self.maskx,
+                              self.is_train,self.p)
 
-        output_layer=softmax(n_hidden,n_output,hidden_layer.activation,self.n_batch)
+        output_layer=softmax(self.n_hidden,self.n_output,hidden_layer.activation,self.n_batch)
         self.params=self.E+hidden_layer.params+output_layer.params
 
         cost=self.categorial_cross_entropy(output_layer.activation,self.y)

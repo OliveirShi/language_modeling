@@ -19,7 +19,11 @@ n_hidden=500
 n_output=80000
 cell='gru'
 optimizer='sgd'
+input_data_file='data/reddit-comments-2015.csv'
+vocabulary_size=1000
 
+# Load data
+x_train, y_train, word_to_index, index_to_word, sorted_vocab = load_data(input_data_file, vocabulary_size)
 
 
 model=RNNLM(n_input,n_hidden,n_output,cell,optimizer,p)
@@ -37,9 +41,10 @@ for epoch in xrange(NEPOCH):
     error/=len(seqs)
     if error<g_error:
         g_error=error
-        save_model('./model.rnnlm.model_'+str(i),model)
-    print "Iter = "+str(i)+ ", Loss = "+str(error)+", Time = "+str(in_time)
-    if error<e:
+        save_model('./model.rnnlm.model_'+str(epoch),model)
+
+    print "Iter = "+str(epoch)+ ", Loss = "+str(error)+", Time = "+str(time.time()-in_start)
+    if error<1e-10:
         break;
 print "Finished. Time = "+str(time.time()-start)
 
@@ -47,15 +52,3 @@ print "save model..."
 save_model("./model/rnnlm.model",model)
 
 
-def train_with_sgd(model, X_train, y_train, k, q_dis, q_w, learning_rate=0.001, nepoch=20, decay=0.9,
-    callback_every=10000, callback=None):
-    num_examples_seen = 0
-    for epoch in range(nepoch):
-        # For each training example...
-        print epoch
-        for i in np.random.permutation(len(y_train)):
-            # One SGD step
-            cost=model.sgd_step(X_train[i], y_train[i], negative_sample(y_train[i],k,q_dis), q_w, learning_rate, decay)
-            print cost,
-            num_examples_seen += 1
-    return model
