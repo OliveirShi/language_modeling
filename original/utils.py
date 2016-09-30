@@ -7,6 +7,7 @@ import operator
 from os.path import isfile,join
 import csv
 import itertools
+import gzip
 import nltk
 
 SENTENCE_START_TOKEN='<S>'
@@ -24,6 +25,86 @@ def load_model(f,model):
     for p in model.params:
         p.set_value(ps[p.name])
     return model
+
+
+def fopen(filename,mode='r'):
+    if filename.endwith('gz'):
+        return gzip.open(filename,mode)
+    return open(filename,mode)
+
+class TextIterator:
+    def __init__(self,source,source_dict,n_batch,maxlen,n_words_source=-1):
+        if source.endwith('gz'):
+            self.source=gzip.open(source,'r')
+        else:
+            self.source=open(source,'r')
+        with open(source_dict,'rb')as f:
+            self.source_dict=pickle.load(f)
+
+        self.n_batch=n_batch
+        self.maxlen=maxlen
+        self.n_words_source=n_words_source
+        self.end_of_data=False
+
+    def __iter__(self):
+        return self
+
+    def reset(self):
+        self.source.seek(0)
+
+    def next(self):
+        if self.end_of_data:
+            self.end_of_data=False
+            self.reset()
+            raise StopIteration
+        source=[]
+        try:
+            while True:
+                ss=self.source.readline()
+                if ss=="":
+                    raise IOError
+                ss=ss.strip().split()
+                ## filter oov words
+                ss=[self.source_dict[w] if w in self.source_dict else 1
+                    for w in ss]
+                if self.n_words_source>0:
+                    ss=[w if w <self.n_words_source else 1 for w in ss]
+                ## filter long sentences
+                if len(ss)>self.maxlen:
+                    continue
+
+                source.append(ss)
+                if len(source)>=self.n_batch:
+                    break
+        except IOError:
+            self.end_of_data=True
+
+        if len(source)<=0:
+            self.end_of_data=False
+            self.reset()
+            raise StopIteration
+        return prepare_data(source)
+
+def prepare_data(seqs_x):
+    lengths_x=[len(s)-1 for s in seqs_x]
+    n_samples=len(seqs_x)
+    maxlen_x=np.max(lengths_x)+1
+
+    x=np.zeros((maxlen_x,n_samples)).astype('int32')
+    y=np.zeros((maxlen_x,n_samples)).astype('int32')
+    x_mask=np.zeros((maxlen_x,n_samples)).astype('float32')
+    y_mask=np.zeros((maxlen_x,n_samples)).astype('float32')
+
+    for idx,s_x in enumerate(seqs_x):
+        x[:lengths_x[idx],idx]=s_x[:-1]
+        y[:lengths_x[idx],idx]=s_x[1:]
+        x_mask[:lengths_x[idx],idx]=1
+        y_mask[:lengths_x[idx],idx]=1
+
+    return x,x_mask,y,y_mask
+
+
+
 
 
 def load_data(filename="data/reddit-comments-2015-08.csv", vocabulary_size=2000, min_sent_characters=0):
@@ -79,9 +160,9 @@ def load_data(filename="data/reddit-comments-2015-08.csv", vocabulary_size=2000,
 
     # Create the training data
     x = np.asarray([[word_to_index[w] for w in sent[:-1]] for sent in tokenized_sentences])
-    maskx = np.asarray([[word_to_index[w] for w in sent[:-1]] for sent in tokenized_sentences])
+    maskx = np.asarray([[1 for w in sent[:-1]] for sent in tokenized_sentences])
     y = np.asarray([[word_to_index[w] for w in sent[1:]] for sent in tokenized_sentences])
-    masky= np.asarray([[word_to_index[w] for w in sent[1:]] for sent in tokenized_sentences])
+    masky= np.asarray([[1 for w in sent[1:]] for sent in tokenized_sentences])
 
     with open('data/dataset.pkl')as f:
         pickle.dump((x,maskx,y,masky, word_to_index, index_to_word, sorted_vocab),f)
