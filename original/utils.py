@@ -29,8 +29,8 @@ def load_model(f,model):
 def load_data(filename="data/reddit-comments-2015-08.csv", vocabulary_size=2000, min_sent_characters=0):
     if isfile('data/dataset.pkl'):
         with open('data/dataset.pkl')as f:
-            (X_train, y_train, word_to_index, index_to_word, sorted_vocab)=pickle.load(f)
-            return X_train, y_train, word_to_index, index_to_word, sorted_vocab
+            (x, maskx,y,masky, word_to_index, index_to_word, sorted_vocab)=pickle.load(f)
+            return x, maskx,y,masky, word_to_index, index_to_word, sorted_vocab
 
     word_to_index = []
     index_to_word = []
@@ -78,13 +78,13 @@ def load_data(filename="data/reddit-comments-2015-08.csv", vocabulary_size=2000,
         tokenized_sentences[i] = [w if w in word_to_index else UNKNOWN_TOKEN for w in sent]
 
     # Create the training data
-    X_train = np.asarray([[word_to_index[w] for w in sent[:-1]] for sent in tokenized_sentences])
-    y_train = np.asarray([[word_to_index[w] for w in sent[1:]] for sent in tokenized_sentences])
+    x = np.asarray([[word_to_index[w] for w in sent[:-1]] for sent in tokenized_sentences])
+    maskx = np.asarray([[word_to_index[w] for w in sent[:-1]] for sent in tokenized_sentences])
+    y = np.asarray([[word_to_index[w] for w in sent[1:]] for sent in tokenized_sentences])
+    masky= np.asarray([[word_to_index[w] for w in sent[1:]] for sent in tokenized_sentences])
 
-    if isfile('data/dataset.pkl'):
-        with open('data/dataset.pkl')as f:
-            (X_train, y_train, word_to_index, index_to_word, sorted_vocab)=pickle.load(f)
-            return X_train, y_train, word_to_index, index_to_word, sorted_vocab
+    with open('data/dataset.pkl')as f:
+        pickle.dump((x,maskx,y,masky, word_to_index, index_to_word, sorted_vocab),f)
 
-    return X_train, y_train, word_to_index, index_to_word, sorted_vocab
+    return x, maskx,y,masky, word_to_index, index_to_word, sorted_vocab
 

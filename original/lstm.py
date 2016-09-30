@@ -112,7 +112,7 @@ class LSTM:
         if self.p>0:
             srng=T.shared_randomstreams.RandomStreams(self.rng.randint(99999))
             drop_mask=srng.binomial(n=1,p=1-self.p,size=h.shape,dtype=theano.config.floatX)
-            self.activation=T.switch(T.eq(self.is_train,1),h*drop_mask,h*(1-p))
+            self.activation=T.switch(T.eq(self.is_train,1),h*drop_mask,h*(1-self.p))
         else:
             self.activation=T.switch(T.eq(self.is_train,1),h,h)
         
