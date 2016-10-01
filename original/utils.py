@@ -1,10 +1,6 @@
 import numpy as np
-import theano
-import theano.tensor as T
 import cPickle as pickle
-import os
 import operator
-from os.path import isfile,join
 import csv
 import itertools
 import gzip

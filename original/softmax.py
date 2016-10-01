@@ -7,11 +7,12 @@ class softmax:
         self.n_input=n_input
         self.n_output=n_output
 
-        self.x=x
+        logit_shape=x.shape
+        self.x=x.reshape([logit_shape[0]*logit_shape[1],logit_shape[2]])
 
         init_W=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
-                                             size=(n_output,n_output)))
+                                             size=(n_output,n_output)),dtype=theano.config.floatX)
         init_b=np.zeros((n_output),dtype=theano.config.floatX)
 
         self.W=theano.shared(value=init_W,name='W')
@@ -22,6 +23,7 @@ class softmax:
         self.build()
 
     def build(self):
+
         self.activation=T.nnet.softmax(T.dot(self.W,self.x)+self.b)
         self.prediction=T.argmax(self.activation,axis=1)
         
