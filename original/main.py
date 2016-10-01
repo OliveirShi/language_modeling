@@ -30,11 +30,15 @@ save_freq=300
 
 
 def train():
-    # Load data
-    train_data=TextIterator(train_datafile,vocab_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
-    test_data=TextIterator(test_datafile,vocab_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
-
+    print 'building...'
     model=RNNLM(n_input,n_hidden,vocabulary_size,cell,optimizer,p)
+
+    # Load data
+    print 'loading...'
+    train_data=TextIterator(train_datafile,vocab_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
+    #test_data=TextIterator(test_datafile,vocab_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
+
+
     print 'training...'
     start=time.time()
     for epoch in xrange(NEPOCH):
@@ -43,7 +47,7 @@ def train():
         in_start=time.time()
         for x,x_mask,y,y_mask in train_data:
             idx+=1
-            cost=model.train(x,x_mask,y,y_mask,lr)
+            cost=model.train(x,x_mask,y,y_mask,n_batch,lr)
             error+=cost
             if np.isnan(cost) or np.isinf(cost):
                 print 'Not a Number Or Infinity detected!'

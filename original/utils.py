@@ -150,14 +150,20 @@ def gengerate_data(filename="data/reddit-comments-2015.csv", vocabulary_size=200
     # Create the training data
     x = np.asarray([[word_to_index[w] for w in sent[:-1]] for sent in tokenized_sentences])
 
-    with open('data/dataset.pkl','wb')as f:
-        pickle.dump(x,f)
+    fw=open('data/dataset.txt','wb')
+    for line in x:
+        fw.write(' '.join(x))
+        fw.write('\n')
+    fw.close()
+
     with open('data/word2index.pkl','wb')as f:
         pickle.dump(word_to_index,f)
     with open('data/index2word.pkl','wb')as f:
         pickle.dump(index_to_word,f)
     with open('data/vocab.pkl','wb')as f:
         pickle.dump( sorted_vocab,f)
+
+gengerate_data()
 
 
 

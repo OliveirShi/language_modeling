@@ -4,13 +4,14 @@ import theano.tensor as T
 
 class LSTM:
     def __init__(self,rng,
-                 n_input,n_hidden,
+                 n_input,n_hidden,n_batch,
                  x,E,mask,
                  is_train=1,p=0.5):
         self.rng=rng
 
         self.n_input=n_input
         self.n_hidden=n_hidden
+        self.n_batch=n_batch
 
         self.x=x
         self.E=E
@@ -110,8 +111,7 @@ class LSTM:
 
         # Dropout
         if self.p>0:
-            srng=T.shared_randomstreams.RandomStreams(self.rng.randint(99999))
-            drop_mask=srng.binomial(n=1,p=1-self.p,size=h.shape,dtype=theano.config.floatX)
+            drop_mask=self.rng.binomial(n=1,p=1-self.p,size=h.shape,dtype=theano.config.floatX)
             self.activation=T.switch(T.eq(self.is_train,1),h*drop_mask,h*(1-self.p))
         else:
             self.activation=T.switch(T.eq(self.is_train,1),h,h)

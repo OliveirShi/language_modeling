@@ -62,11 +62,11 @@ class RNNLM:
         updates=sgd(self.params,gparams,lr)
         
 
-        self.train=theano.function(inputs=[self.x,self.maskx,self.y,self.masky],
+        self.train=theano.function(inputs=[self.x,self.maskx,self.y,self.masky,self.n_batch,lr],
                                    outputs=cost,
                                    updates=updates,
                                    givens={self.is_train:np.cast['int32'](1)})
-        self.predict=theano.function(inputs=[self.x,self.maskx],
+        self.predict=theano.function(inputs=[self.x,self.maskx,self.n_batch],
                                      outputs=prediction,
                                      givens={self.is_train:np.cast['int32'](0)})
 
