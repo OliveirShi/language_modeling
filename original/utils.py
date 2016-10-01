@@ -24,15 +24,14 @@ def load_model(f,model):
 
 
 def fopen(filename,mode='r'):
-    if filename.endwith('gz'):
+    if filename.endswith('gz'):
         return gzip.open(filename,mode)
     return open(filename,mode)
 
 class TextIterator:
     def __init__(self,source,source_dict,n_batch,maxlen,n_words_source=-1):
 
-        with open(source,'rb')as f:
-            self.source=pickle.load(file(source))
+        self.source=fopen(source)
         with open(source_dict,'rb')as f:
             self.source_dict=pickle.load(f)
 
@@ -152,7 +151,8 @@ def gengerate_data(filename="data/reddit-comments-2015.csv", vocabulary_size=200
 
     fw=open('data/dataset.txt','wb')
     for line in x:
-        fw.write(' '.join(x))
+        for word in line:
+            fw.write(str(word)+' ')
         fw.write('\n')
     fw.close()
 
@@ -163,7 +163,7 @@ def gengerate_data(filename="data/reddit-comments-2015.csv", vocabulary_size=200
     with open('data/vocab.pkl','wb')as f:
         pickle.dump( sorted_vocab,f)
 
-gengerate_data()
+
 
 
 

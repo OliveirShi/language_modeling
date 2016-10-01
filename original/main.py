@@ -19,7 +19,7 @@ n_hidden=500
 maxlen=50
 cell='gru'
 optimizer='sgd'
-train_datafile='data/dataset.pkl'
+train_datafile='data/dataset.txt'
 test_datafile='data/dataset.pkl'
 vocab_file='data/vocab.pkl'
 vocabulary_size=1000
@@ -30,15 +30,13 @@ save_freq=300
 
 
 def train():
-    print 'building...'
-    model=RNNLM(n_input,n_hidden,vocabulary_size,cell,optimizer,p)
-
     # Load data
     print 'loading...'
     train_data=TextIterator(train_datafile,vocab_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
     #test_data=TextIterator(test_datafile,vocab_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
 
-
+    print 'building...'
+    model=RNNLM(n_input,n_hidden,vocabulary_size,cell,optimizer,p)
     print 'training...'
     start=time.time()
     for epoch in xrange(NEPOCH):
