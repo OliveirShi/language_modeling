@@ -11,7 +11,7 @@ from utils import TextIterator,save_model
 
 lr=0.01
 p=0.5
-n_batch=10
+n_batch=5
 NEPOCH=100
 
 n_input=300
@@ -21,8 +21,8 @@ cell='gru'
 optimizer='sgd'
 train_datafile='data/dataset.txt'
 test_datafile='data/dataset.pkl'
-vocab_file='data/vocab.pkl'
-vocabulary_size=1000
+word2index_file='data/word2index.pkl'
+vocabulary_size=2000
 
 disp_freq=100
 sample_freq=200
@@ -32,7 +32,7 @@ save_freq=300
 def train():
     # Load data
     print 'loading...'
-    train_data=TextIterator(train_datafile,vocab_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
+    train_data=TextIterator(train_datafile,word2index_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
     #test_data=TextIterator(test_datafile,vocab_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
 
     print 'building...'

@@ -64,10 +64,10 @@ class GRU:
             concated=T.concatenate([x_e,h_tm1])
 
             # Update gate
-            z_t=self.f(T.dot(self.Wz, concated) + self.bz )
+            z_t=self.f(T.dot(concated,self.Wz) + self.bz )
 
             # Input fate
-            r_t=self.f(T.dot(self.Wr, concated) + self.br )
+            r_t=self.f(T.dot(concated,self.Wr) + self.br )
 
             # Cell update
             c_t=T.tanh(T.dot(self.Wxc,x_e)+T.dot(self.Whc,r_t*h_tm1)+self.bc)
