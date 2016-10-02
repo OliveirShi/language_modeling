@@ -19,7 +19,7 @@ class RNNLM:
         self.n_output=n_output
         init_Embd=np.asarray(np.random.uniform(low=-np.sqrt(1./n_output),
                                              high=np.sqrt(1./n_output),
-                                             size=(n_input,n_output)),
+                                             size=(n_output,n_input)),
                            dtype=theano.config.floatX)
         self.E=theano.shared(value=init_Embd,name='word_embedding')
 

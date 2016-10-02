@@ -24,7 +24,7 @@ class GRU:
         # Update gate
         init_Wz=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
-                                             size=(n_hidden,n_input+n_hidden)),dtype=theano.config.floatX)
+                                             size=(n_input+n_hidden,n_hidden)),dtype=theano.config.floatX)
         init_bz=np.zeros((n_hidden),dtype=theano.config.floatX)
 
         self.Wz=theano.shared(value=init_Wz,name='Wz')
@@ -33,7 +33,7 @@ class GRU:
         # Reset gate
         init_Wr=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
-                                             size=(n_hidden,n_input+n_hidden)),dtype=theano.config.floatX)
+                                             size=(n_input+n_hidden,n_hidden)),dtype=theano.config.floatX)
         init_br=np.zeros((n_hidden),dtype=theano.config.floatX)
 
         self.Wr=theano.shared(value=init_Wr,name='Wr')
@@ -42,7 +42,7 @@ class GRU:
         # Cell update
         init_Wxc=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
-                                             size=(n_hidden,n_input)),dtype=theano.config.floatX)
+                                             size=(n_input,n_hidden)),dtype=theano.config.floatX)
         init_Whc=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
                                              size=(n_hidden,n_hidden)),dtype=theano.config.floatX)
@@ -53,15 +53,15 @@ class GRU:
         self.bc=theano.shared(value=init_bc,name='bc')
 
         # Params
-        self.params=[self.Wz,self.Wr,self.bz,self.br]
+        self.params=[self.Wz,self.bz,self.Wr,self.br,self.Wxc,self.Whc,self.bc]
 
         self.build()
 
     def build(self):
         state_pre=T.zeros((self.n_batch,self.n_hidden),dtype=theano.config.floatX)
         def _recurrence(x_t,m,h_tm1):
-            x_e=self.E[:,x_t]
-            concated=T.concatenate([x_e,h_tm1])
+            x_e=self.E[x_t,:]
+            concated=T.concatenate([x_e,h_tm1],axis=1)
 
             # Update gate
             z_t=self.f(T.dot(concated,self.Wz) + self.bz )
@@ -70,7 +70,7 @@ class GRU:
             r_t=self.f(T.dot(concated,self.Wr) + self.br )
 
             # Cell update
-            c_t=T.tanh(T.dot(self.Wxc,x_e)+T.dot(self.Whc,r_t*h_tm1)+self.bc)
+            c_t=T.tanh(T.dot(x_e,self.Wxc)+T.dot(r_t*h_tm1,self.Whc)+self.bc)
 
             h_t=(T.ones_like(z_t)-z_t) * c_t + z_t * h_tm1
 

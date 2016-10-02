@@ -19,9 +19,9 @@ n_hidden=500
 maxlen=50
 cell='gru'
 optimizer='sgd'
-train_datafile='data/dataset.txt'
-test_datafile='data/dataset.pkl'
-word2index_file='data/word2index.pkl'
+train_datafile='data/news.en-00001-of-00100'
+test_datafile='data/news.en.heldout-00000-of-00050'
+index2word_file='data/index2word.pkl'
 vocabulary_size=2000
 
 disp_freq=100
@@ -32,7 +32,7 @@ save_freq=300
 def train():
     # Load data
     print 'loading...'
-    train_data=TextIterator(train_datafile,word2index_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
+    train_data=TextIterator(train_datafile,index2word_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
     #test_data=TextIterator(test_datafile,vocab_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
 
     print 'building...'
@@ -45,6 +45,8 @@ def train():
         in_start=time.time()
         for x,x_mask,y,y_mask in train_data:
             idx+=1
+            print 'x',x
+            print 'y',y
             cost=model.train(x,x_mask,y,y_mask,n_batch,lr)
             error+=cost
             if np.isnan(cost) or np.isinf(cost):
