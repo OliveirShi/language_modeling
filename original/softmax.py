@@ -7,8 +7,8 @@ class softmax:
         self.n_input=n_input
         self.n_output=n_output
 
-        logit_shape=x.shape
-        self.x=x.reshape([logit_shape[0]*logit_shape[1],logit_shape[2]])
+        self.logit_shape=x.shape
+        self.x=x.reshape([self.logit_shape[0]*self.logit_shape[1],self.logit_shape[2]])
 
         init_W=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),

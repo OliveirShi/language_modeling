@@ -32,7 +32,7 @@ class RNNLM:
         self.build()
 
     def build(self):
-        print 'building rnn cell...'
+        print '     building rnn cell...'
         if self.cell=='gru':
             hidden_layer=GRU(self.rng,
                              self.n_input,self.n_hidden,self.n_batch,
@@ -43,9 +43,8 @@ class RNNLM:
                               self.n_input,self.n_hidden,self.n_batch,
                               self.x,self.E,self.x_mask,
                               self.is_train,self.p)
-        print 'building softmax...'
+        print '  building softmax output layer...'
         output_layer=softmax(self.n_hidden,self.n_output,hidden_layer.activation)
-        print 'building params set...'
         self.params=[self.E,]
         self.params+=hidden_layer.params
         self.params+=output_layer.params
@@ -59,7 +58,6 @@ class RNNLM:
                                    outputs=cost,
                                    updates=updates,
                                    givens={self.is_train:np.cast['int32'](1)})
-
 
         self.predict=theano.function(inputs=[self.x,self.x_mask,self.n_batch],
                                      outputs=output_layer.prediction,

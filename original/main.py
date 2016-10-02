@@ -19,18 +19,18 @@ index2word_file='data/index2word.pkl'
 vocabulary_size=2000
 
 disp_freq=100
-sample_freq=200
+sample_freq=10
 save_freq=300
 
 def train():
     # Load data
-    print 'loading...'
+    print 'loading dataset...'
     train_data=TextIterator(train_datafile,index2word_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
     test_data=TextIterator(test_datafile,index2word_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
 
-    print 'building...'
+    print 'building model...'
     model=RNNLM(n_input,n_hidden,vocabulary_size,cell,optimizer,p)
-    print 'training...'
+    print 'training start...'
     start=time.time()
     for epoch in xrange(NEPOCH):
         error=0
@@ -46,18 +46,17 @@ def train():
                 return -1
             if idx % disp_freq==0:
                 print 'epoch:',epoch,'idx:',idx,'cost:',error/disp_freq
+                error=0
             if idx%save_freq==0:
                 print 'dumping...'
-                save_model('data/parameters_%.2f.pkl'%(time.time()-start),model)
+                save_model('model/parameters_%.2f.pkl'%(time.time()-start),model)
             if idx % sample_freq==0:
                 print 'Sampling....'
-                y_pred=model.predict(x,x_mask,y,y_mask)
+                y_pred=model.predict(x,x_mask,n_batch)
                 print y_pred
 
     print "Finished. Time = "+str(time.time()-start)
 
-    print "save model..."
-    save_model("./model/rnnlm.model",model)
 
 if __name__ == '__main__':
     train()
