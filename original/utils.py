@@ -1,10 +1,5 @@
 import numpy as np
 import cPickle as pickle
-import gzip
-
-SENTENCE_START_TOKEN='<s>'
-SENTENCE_END_TOKEN='</s>'
-UNKNOWN_TOKEN='<unk>'
 
 def save_model(f,model):
     ps={}
@@ -18,15 +13,10 @@ def load_model(f,model):
         p.set_value(ps[p.name])
     return model
 
-def fopen(filename,mode='r'):
-    if filename.endswith('gz'):
-        return gzip.open(filename,mode)
-    return open(filename,mode)
-
 class TextIterator:
     def __init__(self,source,index2word_file,n_batch,maxlen,n_words_source=-1):
 
-        self.source=fopen(source)
+        self.source=open(source,'r')
         with open(index2word_file,'rb')as f:
             self.index2word=pickle.load(f)
 
@@ -49,17 +39,17 @@ class TextIterator:
         source=[]
         try:
             while True:
-                ss=self.source.readline()
-                if ss=="":
+                s=self.source.readline()
+                if s=="":
                     raise IOError
-                ss=ss.strip().split(' ')
+                s=s.strip().split(' ')
 
                 if self.n_words_source>0:
-                    ss=[int(w) if int(w) <self.n_words_source else 3 for w in ss]
-                ## filter long sentences
-                if len(ss)>self.maxlen:
+                    s=[int(w) if int(w) <self.n_words_source else 3 for w in s]
+                # filter long sentences
+                if len(s)>self.maxlen:
                     continue
-                source.append(ss)
+                source.append(s)
                 if len(source)>=self.n_batch:
                     break
         except IOError:

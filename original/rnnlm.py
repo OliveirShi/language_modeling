@@ -1,8 +1,8 @@
 from theano.tensor.shared_randomstreams import RandomStreams
 
-from softmax import *
-from gru import *
-from lstm import *
+from softmax import softmax
+from gru import GRU
+from lstm import LSTM
 from updates import *
 
 class RNNLM:
@@ -16,8 +16,8 @@ class RNNLM:
         self.n_hidden=n_hidden
         self.n_output=n_output
         init_Embd=np.asarray(np.random.uniform(low=-np.sqrt(1./n_output),
-                                             high=np.sqrt(1./n_output),
-                                             size=(n_output,n_input)),
+                                               high=np.sqrt(1./n_output),
+                                               size=(n_output,n_input)),
                            dtype=theano.config.floatX)
         self.E=theano.shared(value=init_Embd,name='word_embedding')
 
@@ -48,31 +48,22 @@ class RNNLM:
         print 'building params set...'
         self.params=[self.E,]
         self.params+=hidden_layer.params
-
         self.params+=output_layer.params
 
         cost=self.categorical_crossentropy(output_layer.activation,self.y)
-
-   
         lr=T.scalar("lr")
         gparams=[T.clip(T.grad(cost,p),-10,10) for p in self.params]
         updates=sgd(self.params,gparams,lr)
-
-
-        self.output_computation=theano.function(inputs=[self.x,self.x_mask,self.n_batch],
-                                   outputs=output_layer.activation.shape,
-                                   givens={self.is_train:np.cast['int32'](1)})
 
         self.train=theano.function(inputs=[self.x,self.x_mask,self.y,self.y_mask,self.n_batch,lr],
                                    outputs=cost,
                                    updates=updates,
                                    givens={self.is_train:np.cast['int32'](1)})
 
-        '''
-        self.predict=theano.function(inputs=[self.x,self.xmask,self.n_batch],
-                                     outputs=prediction,
+
+        self.predict=theano.function(inputs=[self.x,self.x_mask,self.n_batch],
+                                     outputs=output_layer.prediction,
                                      givens={self.is_train:np.cast['int32'](0)})
-        '''
 
 
     def categorical_crossentropy(self,y_pred,y_true):
