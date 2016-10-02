@@ -86,7 +86,7 @@ def prepare_data(seqs_x):
     x_mask=np.zeros((maxlen_x,n_samples)).astype('float32')
     y_mask=np.zeros((maxlen_x,n_samples)).astype('float32')
 
-    print 'sequence padding'
+
     for idx,s_x in enumerate(seqs_x):
         x[:lengths_x[idx],idx]=s_x[:-1]
         y[:lengths_x[idx],idx]=s_x[1:]

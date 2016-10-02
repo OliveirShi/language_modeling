@@ -14,8 +14,8 @@ p=0.5
 n_batch=5
 NEPOCH=100
 
-n_input=300
-n_hidden=500
+n_input=250
+n_hidden=300
 maxlen=50
 cell='gru'
 optimizer='sgd'
@@ -45,11 +45,11 @@ def train():
         in_start=time.time()
         for x,x_mask,y,y_mask in train_data:
             idx+=1
-            print 'x',x
-            print 'y',y
-            cost=model.train(x,x_mask,y,y_mask,n_batch,lr)
-            error+=cost
-            if np.isnan(cost) or np.isinf(cost):
+            hidden_output_dim=model.train(x,x_mask,n_batch)
+            cost=0
+            print 'epoch:',epoch,'idx:',idx,'hidden_output_dim:',hidden_output_dim
+            error+=np.sum(cost)
+            if np.isnan(error) or np.isinf(error):
                 print 'Not a Number Or Infinity detected!'
             if idx % disp_freq==0:
                 print 'epoch:',epoch,'idx:',idx,'cost:',error/disp_freq
