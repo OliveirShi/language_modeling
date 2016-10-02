@@ -1,6 +1,6 @@
 from theano.tensor.shared_randomstreams import RandomStreams
 
-from softmax import softmax
+from level_softmax import level_softmax
 from gru import GRU
 from lstm import LSTM
 from updates import *
@@ -44,7 +44,7 @@ class RNNLM:
                               self.x,self.E,self.x_mask,
                               self.is_train,self.p)
         print '  building softmax output layer...'
-        output_layer=softmax(self.n_hidden,self.n_output,hidden_layer.activation)
+        output_layer=level_softmax(self.n_hidden,self.n_output,hidden_layer.activation,self.y)
         self.params=[self.E,]
         self.params+=hidden_layer.params
         self.params+=output_layer.params
