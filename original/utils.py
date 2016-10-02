@@ -1,10 +1,6 @@
 import numpy as np
 import cPickle as pickle
-import operator
-import csv
-import itertools
 import gzip
-import nltk
 
 SENTENCE_START_TOKEN='<s>'
 SENTENCE_END_TOKEN='</s>'
@@ -21,7 +17,6 @@ def load_model(f,model):
     for p in model.params:
         p.set_value(ps[p.name])
     return model
-
 
 def fopen(filename,mode='r'):
     if filename.endswith('gz'):
@@ -86,13 +81,11 @@ def prepare_data(seqs_x):
     x_mask=np.zeros((maxlen_x,n_samples)).astype('float32')
     y_mask=np.zeros((maxlen_x,n_samples)).astype('float32')
 
-
     for idx,s_x in enumerate(seqs_x):
         x[:lengths_x[idx],idx]=s_x[:-1]
         y[:lengths_x[idx],idx]=s_x[1:]
         x_mask[:lengths_x[idx],idx]=1
         y_mask[:lengths_x[idx],idx]=1
-
 
     return x,x_mask,y,y_mask
 

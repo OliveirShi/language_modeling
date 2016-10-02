@@ -24,7 +24,8 @@ class GRU:
         # Update gate
         init_Wz=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
-                                             size=(n_input+n_hidden,n_hidden)),dtype=theano.config.floatX)
+                                             size=(n_input+n_hidden,n_hidden)),
+                           dtype=theano.config.floatX)
         init_bz=np.zeros((n_hidden),dtype=theano.config.floatX)
 
         self.Wz=theano.shared(value=init_Wz,name='Wz')
@@ -33,7 +34,8 @@ class GRU:
         # Reset gate
         init_Wr=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
-                                             size=(n_input+n_hidden,n_hidden)),dtype=theano.config.floatX)
+                                             size=(n_input+n_hidden,n_hidden)),
+                           dtype=theano.config.floatX)
         init_br=np.zeros((n_hidden),dtype=theano.config.floatX)
 
         self.Wr=theano.shared(value=init_Wr,name='Wr')
@@ -41,11 +43,13 @@ class GRU:
 
         # Cell update
         init_Wxc=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
-                                             high=np.sqrt(1./n_input),
-                                             size=(n_input,n_hidden)),dtype=theano.config.floatX)
+                                              high=np.sqrt(1./n_input),
+                                              size=(n_input,n_hidden)),
+                            dtype=theano.config.floatX)
         init_Whc=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
-                                             high=np.sqrt(1./n_input),
-                                             size=(n_hidden,n_hidden)),dtype=theano.config.floatX)
+                                              high=np.sqrt(1./n_input),
+                                              size=(n_hidden,n_hidden)),
+                            dtype=theano.config.floatX)
         init_bc=np.zeros((n_hidden),dtype=theano.config.floatX)
 
         self.Wxc=theano.shared(value=init_Wxc,name='Wxc')
@@ -72,10 +76,11 @@ class GRU:
             # Cell update
             c_t=T.tanh(T.dot(x_e,self.Wxc)+T.dot(r_t*h_tm1,self.Whc)+self.bc)
 
+            # Hidden state
             h_t=(T.ones_like(z_t)-z_t) * c_t + z_t * h_tm1
 
+            # masking
             h_t=h_t*m[:,None]
-            #theano.printing.debugprint(h_t,print_type=True)
 
             return h_t
 

@@ -45,9 +45,6 @@ def train():
         in_start=time.time()
         for x,x_mask,y,y_mask in train_data:
             idx+=1
-            print x
-            print 'xshape',x.shape
-            print 'yshape',y.shape
             output_dim=model.output_computation(x,x_mask,n_batch)
             print 'output_dim:',output_dim
             cost=model.train(x,x_mask,y,y_mask,n_batch,lr)

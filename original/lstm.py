@@ -24,7 +24,7 @@ class LSTM:
         # Forget gate params
         init_Wf=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
-                                             size=(n_hidden,n_input+n_hidden)),
+                                             size=(n_input+n_hidden,n_hidden)),
                            dtype=theano.config.floatX)
         init_bf=np.zeros((n_hidden),dtype=theano.config.floatX)
 
@@ -34,7 +34,7 @@ class LSTM:
         # Input gate params
         init_Wi=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
-                                             size=(n_hidden,n_input+n_hidden)),
+                                             size=(n_input+n_hidden,n_hidden)),
                            dtype=theano.config.floatX)
         init_bi=np.zeros((n_hidden),dtype=theano.config.floatX)
 
@@ -44,7 +44,7 @@ class LSTM:
         # Cell gate params
         init_Wc=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
-                                             size=(n_hidden,n_input+n_hidden)),
+                                             size=(n_input+n_hidden,n_hidden)),
                            dtype=theano.config.floatX)
         init_bc=np.zeros((n_hidden),dtype=theano.config.floatX)
 
@@ -54,7 +54,7 @@ class LSTM:
         # Output gate params
         init_Wo=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
-                                             size=(n_hidden,n_input+n_hidden)),
+                                             size=(n_input+n_hidden,n_hidden)),
                            dtype=theano.config.floatX)
         init_bo=np.zeros((n_hidden),dtype=theano.config.floatX)
 
@@ -68,9 +68,6 @@ class LSTM:
         self.build()
 
     def build(self):
-        x=T.fmatrix('x')
-        y=T.fmatrix('y')
-
         '''
             Compute the hidden state in an LSTM.
             params:
@@ -80,20 +77,20 @@ class LSTM:
             return [h_t, c_t]
         '''
         def _recurrence(x_t,m,h_tm1,c_tm1):
-            x_e=self.E[:,x_t]
+            x_e=self.E[x_t,:]
             concated=T.concatenate([x_e,h_tm1])
 
             # Forget gate
-            f_t=self.f(T.dot(self.Wf,concated) + self.bf)
+            f_t=self.f(T.dot(concated,self.Wf) + self.bf)
             # Input gate
-            i_t=self.f(T.dot(self.Wi,concated) + self.bi)
+            i_t=self.f(T.dot(concated,self.Wi) + self.bi)
 
             # Cell update
-            c_tilde_t=T.tanh(T.dot(self.Wc,concated) + self.bc)
+            c_tilde_t=T.tanh(T.dot(concated,self.Wc) + self.bc)
             c_t=f_t * c_tm1 + i_t * c_tilde_t
 
             # Output gate
-            o_t=self.f(T.dot(self.Wo,concated) + self.bo)
+            o_t=self.f(T.dot(concated,self.Wo) + self.bo)
 
             # hidden state
             h_t= o_t * T.tanh(c_t)
