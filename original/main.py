@@ -10,7 +10,7 @@ from rnnlm import *
 from utils import TextIterator,save_model
 
 lr=0.01
-p=0.5
+p=0.0
 n_batch=5
 NEPOCH=100
 
@@ -45,9 +45,14 @@ def train():
         in_start=time.time()
         for x,x_mask,y,y_mask in train_data:
             idx+=1
-            hidden_output_dim=model.train(x,x_mask,n_batch)
-            cost=0
-            print 'epoch:',epoch,'idx:',idx,'hidden_output_dim:',hidden_output_dim
+            print x
+            print 'xshape',x.shape
+            print 'yshape',y.shape
+            output_dim=model.output_computation(x,x_mask,n_batch)
+            print 'output_dim:',output_dim
+            cost=model.train(x,x_mask,y,y_mask,n_batch,lr)
+
+
             error+=np.sum(cost)
             if np.isnan(error) or np.isinf(error):
                 print 'Not a Number Or Infinity detected!'

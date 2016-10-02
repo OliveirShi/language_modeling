@@ -47,12 +47,13 @@ class RNNLM:
                               self.x,self.E,self.xmask,
                               self.is_train,self.p)
         print 'building softmax...'
-        #output_layer=softmax(self.n_hidden,self.n_output,hidden_layer.activation)
+        print 'softmax dim:',self.n_hidden,self.n_output
+        output_layer=softmax(self.n_hidden,self.n_output,hidden_layer.activation)
         #prediction=output_layer.prediction
         print 'building params set...'
         self.params=[self.E,]
         self.params+=hidden_layer.params
-        '''
+
         self.params+=output_layer.params
 
         cost=self.categorical_crossentropy(output_layer.activation,self.y)
@@ -63,23 +64,27 @@ class RNNLM:
         updates=sgd(self.params,gparams,lr)
 
 
-        self.train=theano.function(inputs=[self.x,self.xmask,self.y,self.ymask,self.n_batch],
-                                   outputs=hidden_layer.activation,
-                                   #updates=updates,
+        self.output_computation=theano.function(inputs=[self.x,self.xmask,self.n_batch],
+                                   outputs=output_layer.activation.shape,
                                    givens={self.is_train:np.cast['int32'](1)})
 
+        self.train=theano.function(inputs=[self.x,self.xmask,self.y,self.ymask,self.n_batch,lr],
+                                   outputs=cost,
+                                   updates=updates,
+                                   givens={self.is_train:np.cast['int32'](1)})
+
+        '''
         self.predict=theano.function(inputs=[self.x,self.xmask,self.n_batch],
                                      outputs=prediction,
                                      givens={self.is_train:np.cast['int32'](0)})
         '''
-        self.train=theano.function(inputs=[self.x,self.xmask,self.n_batch],
-                                   outputs=hidden_layer.activation.shape,
-                                   #updates=updates,
-                                   givens={self.is_train:np.cast['int32'](1)})
+
+
 
     def categorical_crossentropy(self,y_pred,y_true):
         y_pred=T.clip(y_pred,self.epsilon,1.0-self.epsilon)
-        
+        #y_true_shape=y_true.shape
+        y_true=y_true.flatten()
         nll=T.nnet.categorical_crossentropy(y_pred,y_true)
-        return T.sum(nll*self.ymask)/T.sum(self.ymask)
+        return T.sum(nll*self.ymask.flatten())/T.sum(self.ymask)
     
