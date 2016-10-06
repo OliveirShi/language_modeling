@@ -22,7 +22,7 @@ if not MODEL_OUTPUT_FILE:
 # Load data
 x_train, y_train, word_to_index, index_to_word, sorted_vocab = load_data(INPUT_DATA_FILE, VOCABULARY_SIZE)
 
-k = 2*1000
+k = 200
 alpha = 0
 q_dis = Q_dis(word_to_index,sorted_vocab,alpha)
 q_w = Q_w(word_to_index,sorted_vocab,alpha)
@@ -40,7 +40,7 @@ print q_w
 
 
 # Build model
-model = GRUTheano(VOCABULARY_SIZE, hidden_dim=HIDDEN_DIM, bptt_truncate=-1)
+model = GRUTheano(VOCABULARY_SIZE, hidden_dim=HIDDEN_DIM, bptt_truncate=-1,k=k)
 
 # Print SGD step time
 t1 = time.time()

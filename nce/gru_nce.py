@@ -1,15 +1,15 @@
 import numpy as np
 import theano as theano
 import theano.tensor as T
-from theano.gradient import grad_clip
 
 class GRUTheano:
     
-    def __init__(self, word_dim, hidden_dim=128, bptt_truncate=-1):
+    def __init__(self, word_dim, hidden_dim=128, bptt_truncate=-1,k=10):
         # Assign instance variables
         self.word_dim = word_dim
         self.hidden_dim = hidden_dim
         self.bptt_truncate = bptt_truncate
+        self.k=k
         # Initialize the network parameters
         E = np.random.uniform(-np.sqrt(1./word_dim), np.sqrt(1./word_dim), (hidden_dim, word_dim))
         U = np.random.uniform(-np.sqrt(1./hidden_dim), np.sqrt(1./hidden_dim), (6, hidden_dim, hidden_dim))
@@ -76,21 +76,19 @@ class GRUTheano:
             # correct word probability (1,1)
             c_o_t = T.exp(V[y_t].dot(s_t2)+c[y_t])
 
-            # sample set probability
-            t_o = c_o_t + T.sum(q_w[neg_y_t])
+            # negative word probability (k,1)
+            n_o_t = T.exp(V[neg_y_t].dot(s_t2)+c[neg_y_t])
 
             # positive probability
-            c_o_p = c_o_t / t_o  
+            c_o_p = c_o_t / (c_o_t+self.k*q_w[y_t])
 
             # negative probability (k,1)
-            n_o_p = q_w[neg_y_t]  / t_o
+            n_o_p = q_w[neg_y_t]/(n_o_t+self.k*q_w[neg_y_t])
 
+            # cost for each y in nce
+            cost = -(T.log(c_o_p) + T.sum(T.log(n_o_p)))
 
-            # cost for each y in blackout
-            J_dis = -(T.log(c_o_p) + T.sum(T.log(n_o_p)))
-
-            # blackout version discriminative objective function
-            return [J_dis, s_t1, s_t2]
+            return [cost, s_t1, s_t2]
         
         [j, s, s2], updates = theano.scan(
             forward_prop_step,

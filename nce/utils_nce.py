@@ -137,11 +137,17 @@ def train_with_sgd(model, X_train, y_train, k, q_dis, q_w, learning_rate=0.001, 
     for epoch in range(nepoch):
         # For each training example...
         print epoch
+        error=0
+        index=0
         for i in np.random.permutation(len(y_train)):
             # One SGD step
-            
+            index+=1
             cost=model.sgd_step(X_train[i], y_train[i], negative_sample(y_train[i],k,q_dis), q_w, learning_rate, decay)
-            print cost,'\t',
+            error+=cost
+            if index%20==0:
+                print error*1.0/20,'\t',
+                error=0
+                index=0
             num_examples_seen += 1
     return model
 
