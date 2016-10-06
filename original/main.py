@@ -5,28 +5,29 @@ from utils import TextIterator,save_model
 
 lr=0.01
 p=0.0
-n_batch=5
+n_batch=50
 NEPOCH=100
 
 n_input=250
-n_hidden=300
-maxlen=50
+n_hidden=500
+maxlen=200
 cell='gru'
 optimizer='sgd'
-train_datafile='data/news.en-00001-of-00100'
-test_datafile='data/news.en.heldout-00000-of-00050'
-index2word_file='data/index2word.pkl'
-vocabulary_size=2000
+train_datafile='../data/billion.tr'
+test_datafile='../data/billion.te'
+index2word_file='../data/index2word.pkl'
+n_words_source=-1
+vocabulary_size=793472
 
-disp_freq=100
-sample_freq=10
-save_freq=300
+disp_freq=10
+sample_freq=20
+save_freq=30
 
 def train():
     # Load data
     print 'loading dataset...'
-    train_data=TextIterator(train_datafile,index2word_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
-    test_data=TextIterator(test_datafile,index2word_file,n_words_source=vocabulary_size,n_batch=n_batch,maxlen=maxlen)
+    train_data=TextIterator(train_datafile,index2word_file,n_words_source=n_words_source,n_batch=n_batch,maxlen=maxlen)
+    test_data=TextIterator(test_datafile,index2word_file,n_words_source=n_words_source,n_batch=n_batch,maxlen=maxlen)
 
     print 'building model...'
     model=RNNLM(n_input,n_hidden,vocabulary_size,cell,optimizer,p)
