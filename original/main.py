@@ -8,16 +8,16 @@ p=0.0
 n_batch=50
 NEPOCH=100
 
-n_input=250
-n_hidden=500
-maxlen=200
+n_input=50
+n_hidden=100
+maxlen=50
 cell='gru'
 optimizer='sgd'
-train_datafile='../data/billion.tr'
-test_datafile='../data/billion.te'
-index2word_file='../data/index2word.pkl'
-n_words_source=-1
-vocabulary_size=793472
+train_datafile='./data/news.en-00001-of-00100'
+test_datafile='./data/news.en.heldout-00000-of-00050'
+index2word_file='./data/index2word.pkl'
+n_words_source=2000
+vocabulary_size=2000
 
 disp_freq=10
 sample_freq=20
