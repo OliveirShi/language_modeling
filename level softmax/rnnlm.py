@@ -1,8 +1,9 @@
 from theano.tensor.shared_randomstreams import RandomStreams
 
-from level_softmax import level_softmax
+from softmax import softmax
 from gru import GRU
 from lstm import LSTM
+from level_softmax import level_softmax
 from updates import *
 
 class RNNLM:
@@ -49,7 +50,7 @@ class RNNLM:
         self.params+=hidden_layer.params
         self.params+=output_layer.params
 
-        cost=self.categorical_crossentropy(output_layer.activation,self.y)
+        cost=self.categorical_crossentropy(output_layer.activation)
         lr=T.scalar("lr")
         gparams=[T.clip(T.grad(cost,p),-10,10) for p in self.params]
         updates=sgd(self.params,gparams,lr)
@@ -64,9 +65,6 @@ class RNNLM:
                                      givens={self.is_train:np.cast['int32'](0)})
 
 
-    def categorical_crossentropy(self,y_pred,y_true):
-        y_pred=T.clip(y_pred,self.epsilon,1.0-self.epsilon)
-        y_true=y_true.flatten()
-        nll=T.nnet.categorical_crossentropy(y_pred,y_true)
-        return T.sum(nll*self.y_mask.flatten())/T.sum(self.y_mask)
+    def categorical_crossentropy(self,y_pred):
+        return T.sum(y_pred*self.y_mask.flatten())/T.sum(self.y_mask)
     
