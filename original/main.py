@@ -4,24 +4,24 @@ from rnnlm import *
 from utils import TextIterator,save_model
 
 lr=0.01
-p=0.0
-n_batch=50
+p=0.5
+n_batch=5
 NEPOCH=100
 
-n_input=50
-n_hidden=100
-maxlen=50
+n_input=100
+n_hidden=250
+maxlen=100
 cell='gru'
 optimizer='sgd'
-train_datafile='./data/news.en-00001-of-00100'
-test_datafile='./data/news.en.heldout-00000-of-00050'
-index2word_file='./data/index2word.pkl'
-n_words_source=2000
-vocabulary_size=2000
+train_datafile='../data/billion.tr'
+test_datafile='../data/billion.te'
+index2word_file='../data/index2word.pkl'
+n_words_source=-1
+vocabulary_size=793473
 
-disp_freq=10
-sample_freq=20
-save_freq=30
+disp_freq=100
+sample_freq=200
+save_freq=5000
 
 def train():
     # Load data
@@ -50,7 +50,7 @@ def train():
                 error=0
             if idx%save_freq==0:
                 print 'dumping...'
-                save_model('model/parameters_%.2f.pkl'%(time.time()-start),model)
+                save_model('./model/parameters_%.2f.pkl'%(time.time()-start),model)
             if idx % sample_freq==0:
                 print 'Sampling....'
                 y_pred=model.predict(x,x_mask,n_batch)
