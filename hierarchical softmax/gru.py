@@ -1,66 +1,100 @@
 import numpy as np
 import theano
 import theano.tensor as T
-from theano.tensor.shared_randomstreams import RandomStreams
 
+class GRU:
+    def __init__(self,rng,
+                 n_input,n_hidden,n_batch,
+                 x,E,mask,
+                 is_train=1,p=0.5):
+        self.rng=rng
 
-class GRULayer(object):
-    def __init__(self,X,mask,shape,is_train=1,p=0.5,state_pre=None):
-        prefix="GRU"
-        self.in_size,self.hidden_size=shape
+        self.n_input=n_input
+        self.n_hidden=n_hidden
+        self.n_batch=n_batch
+        self.f=T.nnet.sigmoid
 
-        self.W_xr=theano.shared(value=np.asarray((np.random.randn(self.in_size,self.hidden_size) * 0.1),dtype=theano.config.floatX),
-                                name=prefix+'_W_xr')
-        self.W_hr=theano.shared(value=np.asarray((np.random.randn(self.hidden_size,self.hidden_size) * 0.1),dtype=theano.config.floatX),
-                                name=prefix+'_W_hr')
-        self.b_r=theano.shared(value=np.asarray(np.zeros(self.hidden_size),dtype=theano.config.floatX),
-                               name=prefix+'_b_r')
-
-        self.W_xz=theano.shared(value=np.asarray((np.random.randn(self.in_size,self.hidden_size) * 0.1),dtype=theano.config.floatX),
-                                name=prefix+'_W_xz')
-        self.W_hz=theano.shared(value=np.asarray((np.random.randn(self.hidden_size,self.hidden_size) * 0.1),dtype=theano.config.floatX),
-                                name=prefix+'_W_hz')
-        self.b_z=theano.shared(value=np.asarray(np.zeros(self.hidden_size),dtype=theano.config.floatX),
-                               name=prefix+'_b_z')
-
-        self.W_xh=theano.shared(value=np.asarray((np.random.randn(self.in_size,self.hidden_size) * 0.1),dtype=theano.config.floatX),
-                                name=prefix+'_W_xh')
-        self.W_hh=theano.shared(value=np.asarray((np.random.randn(self.hidden_size,self.hidden_size) * 0.1),dtype=theano.config.floatX),
-                                name=prefix+'_W_hh')
-        self.b_h=theano.shared(value=np.asarray(np.zeros(self.hidden_size),dtype=theano.config.floatX),
-                               name=prefix+'_b_h')
-
-        self.X=X
+        self.x=x
+        self.E=E
         self.mask=mask
+        self.is_train=is_train
+        self.p=p
 
 
-        batch_size=self.X.shape[1]
-        if state_pre==None:
-            state_pre=T.zeros((batch_size,self.hidden_size),dtype=theano.config.floatX)
+        # Update gate
+        init_Wz=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
+                                             high=np.sqrt(1./n_input),
+                                             size=(n_input+n_hidden,n_hidden)),
+                           dtype=theano.config.floatX)
+        init_bz=np.zeros((n_hidden),dtype=theano.config.floatX)
 
-        def _step(x,m,h_tm1):
-            r=T.nnet.sigmoid(T.dot(x,self.W_xr) + T.dot(h_tm1,self.W_hr) +self.b_r)
-            z=T.nnet.sigmoid(T.dot(x,self.W_xz) + T.dot(h_tm1,self.W_hz) +self.b_z)
+        self.Wz=theano.shared(value=init_Wz,name='Wz')
+        self.bz=theano.shared(value=init_bz,name='bz')
 
-            gh=T.tanh(T.dot(x , self.W_xh) + T.dot(r * h_tm1 , self.W_hh) + self.b_h)
+        # Reset gate
+        init_Wr=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
+                                             high=np.sqrt(1./n_input),
+                                             size=(n_input+n_hidden,n_hidden)),
+                           dtype=theano.config.floatX)
+        init_br=np.zeros((n_hidden),dtype=theano.config.floatX)
 
-            h_t=z * h_tm1 + (T.ones_like(z) - z) * gh
+        self.Wr=theano.shared(value=init_Wr,name='Wr')
+        self.br=theano.shared(value=init_br,name='br')
 
-            h_t = h_t * m[:,None]
+        # Cell update
+        init_Wxc=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
+                                              high=np.sqrt(1./n_input),
+                                              size=(n_input,n_hidden)),
+                            dtype=theano.config.floatX)
+        init_Whc=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
+                                              high=np.sqrt(1./n_input),
+                                              size=(n_hidden,n_hidden)),
+                            dtype=theano.config.floatX)
+        init_bc=np.zeros((n_hidden),dtype=theano.config.floatX)
+
+        self.Wxc=theano.shared(value=init_Wxc,name='Wxc')
+        self.Whc=theano.shared(value=init_Whc,name='Whx')
+        self.bc=theano.shared(value=init_bc,name='bc')
+
+        # Params
+        self.params=[self.Wz,self.bz,self.Wr,self.br,self.Wxc,self.Whc,self.bc]
+
+        self.build()
+
+    def build(self):
+        state_pre=T.zeros((self.n_batch,self.n_hidden),dtype=theano.config.floatX)
+        def _recurrence(x_t,m,h_tm1):
+            x_e=self.E[x_t,:]
+            concated=T.concatenate([x_e,h_tm1],axis=1)
+
+            # Update gate
+            z_t=self.f(T.dot(concated,self.Wz) + self.bz )
+
+            # Input fate
+            r_t=self.f(T.dot(concated,self.Wr) + self.br )
+
+            # Cell update
+            c_t=T.tanh(T.dot(x_e,self.Wxc)+T.dot(r_t*h_tm1,self.Whc)+self.bc)
+
+            # Hidden state
+            h_t=(T.ones_like(z_t)-z_t) * c_t + z_t * h_tm1
+
+            # masking
+            h_t=h_t*m[:,None]
 
             return h_t
 
-        h,_=theano.scan(fn=_step,
-                        sequences=[self.X,self.mask],
-                        outputs_info=state_pre)
-        self.h=h
-        if p>0:
-            trng=RandomStreams(12345)
-            drop_mask=trng.binomial(n=1,p=1-p,size=h.shape,dtype=theano.config.floatX)
-            self.activation=T.switch(T.eq(is_train,1),h*drop_mask,h*(1-p))
-        else:
-            self.activation=T.switch(T.eq(is_train,1),h,h)
+        h,_=theano.scan(fn=_recurrence,
+                        sequences=[self.x,self.mask],
+                        outputs_info=state_pre,
+                        truncate_gradient=-1)
 
-        self.params=[self.W_xr,self.W_hr,self.b_r,
-                     self.W_xz,self.W_hz,self.b_z,
-                     self.W_xh,self.W_hh,self.b_h]
+        # Dropout
+        if self.p>0:
+            drop_mask=self.rng.binomial(n=1,p=1-self.p,size=h.shape,dtype=theano.config.floatX)
+            self.activation=T.switch(T.eq(self.is_train,1),h*drop_mask,h*(1-self.p))
+        else:
+            self.activation=T.switch(T.eq(self.is_train,1),h,h)
+            
+                
+        

@@ -2,7 +2,6 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-
 class Softmaxlayer(object):
     def __init__(self,X,y,maskY,shape):
         prefix="n_softmax_"
@@ -73,9 +72,10 @@ def build_binary_tree(values):
 
     return layers
 
-class HierarchicalSoftmaxLayer(object):
+class H_Softmax(object):
 
-    def __init__(self,x,y,maskY,shape):
+    def __init__(self,shape,
+                 x,y,maskY):
         self.prefix='h_softmax'
 
         self.in_size,self.out_size=shape
@@ -157,8 +157,6 @@ class HierarchicalSoftmaxLayer(object):
                     self.route_choice_matrix_val[i][a]=0
                     self.mask_matrix_val[i][a]=0.0
 
-
-
         self.tree_matrix=theano.shared(value=tree_matrix_val,name='tree_matrix',borrow=True)
         self.route_node_matrix=theano.shared(value=self.route_choice_matrix_val,name=self.prefix+'route_node_matrix',borrow=True)
         self.route_choice_matrix=theano.shared(value=self.route_choice_matrix_val,name=self.prefix+'route_choice_matrix',borrow=True)
@@ -192,7 +190,7 @@ class HierarchicalSoftmaxLayer(object):
         n_steps=self.x.shape[0]
         batch_size=self.x.shape[1]
 
-        fires=T.ones(shape=(n_steps,batch_size),dtype=np.int64)*self.tree[-1][0].index
+        fires=T.ones(shape=(n_steps,batch_size),dtype=np.int32)*self.tree[-1][0].index
 
         def predict_step(current_node,input_vector):
             # left nodes
