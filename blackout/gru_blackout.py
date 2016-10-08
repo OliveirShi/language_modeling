@@ -82,7 +82,7 @@ class GRUTheano:
             # sample set probability
             t_o = (q_w[y_t]*c_o_t) + T.sum(q_w[neg_y_t]*n_o_t)
 
-            # 
+            # positive probability
             c_o_p = q_w[y_t]*c_o_t / t_o
 
             # negative probability (k,1)

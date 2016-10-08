@@ -41,7 +41,7 @@ class GRUTheano:
         x = T.ivector('x')
         y = T.ivector('y')
 
-        # negy is the negative sampling for blackout
+        # negy is the negative sampling for nce
         # shape (len(y),k)
         negy = T.lmatrix('negy')
         q_w = T.vector('q_w')
