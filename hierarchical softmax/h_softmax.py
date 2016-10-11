@@ -171,7 +171,7 @@ class H_Softmax(object):
 
     def build_graph(self):
         # 1
-        nodes=self.route_choice_matrix[self.y]
+        nodes=self.route_node_matrix[self.y]
         choices=self.route_choice_matrix[self.y]
         mask=self.mask_matrix[self.y]
         # 2.
