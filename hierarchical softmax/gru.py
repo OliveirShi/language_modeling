@@ -20,7 +20,6 @@ class GRU:
         self.is_train=is_train
         self.p=p
 
-
         # Update gate
         init_Wz=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),

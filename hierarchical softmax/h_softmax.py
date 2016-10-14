@@ -76,7 +76,7 @@ class H_Softmax(object):
 
     def __init__(self,shape,
                  x,y,maskY):
-        self.prefix='h_softmax'
+        self.prefix='h_softmax_'
 
         self.in_size,self.out_size=shape
         # in_size:size,mb_size=out_size
