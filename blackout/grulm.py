@@ -4,10 +4,11 @@ import theano.tensor as T
 from updates import sgd
 
 class GRULM:
-    def __init__(self, word_dim, hidden_dim=128, bptt_truncate=-1):
+    def __init__(self,hidden_dim, word_dim, bptt_truncate=-1):
         # Assign instance variables
         self.word_dim = word_dim
         self.hidden_dim = hidden_dim
+        print 'dim',self.word_dim,self.hidden_dim
         self.bptt_truncate = bptt_truncate
         # Initialize the network parameters
         init_E = np.random.uniform(-np.sqrt(1./word_dim), np.sqrt(1./word_dim), (hidden_dim, word_dim))
@@ -35,7 +36,7 @@ class GRULM:
 
         # negy is the negative sampling for blackout
         # shape (len(y),k)
-        negy = T.lmatrix('negy')
+        negy = T.imatrix('negy')
         q_w = T.vector('q_w')
         
         def _recurrence(x_t, y_t, neg_y_t, s_t1_prev, s_t2_prev, q_w):
@@ -55,16 +56,11 @@ class GRULM:
             r_t2 = T.nnet.hard_sigmoid(U[4].dot(s_t1) + W[4].dot(s_t2_prev) + b[4])
             c_t2 = T.tanh(U[5].dot(s_t1) + W[5].dot(s_t2_prev * r_t2) + b[5])
             s_t2 = (T.ones_like(z_t2) - z_t2) * c_t2 + z_t2 * s_t2_prev
-            
-            # Final output calculation
-            # Theano's softmax returns a matrix with one row, we only need the row
-
 
             # probability of output o_t
             # o_t = T.nnet.softmax(V.dot(s_t2) + c)[0]
 
             # blackout version output probability
-
             # correct word probability (1,1)
             c_o_t = T.exp(V[y_t].dot(s_t2)+c[y_t])
 
@@ -80,23 +76,23 @@ class GRULM:
             # negative probability (k,1)
             n_o_p = q_w[neg_y_t]*n_o_t  / t_o
 
-
             # cost for each y in blackout
             J_dis = -(T.log(c_o_p) + T.sum(T.log(T.ones_like(n_o_p)-n_o_p)))
 
             # blackout version discriminative objective function
             return [J_dis, s_t1, s_t2]
         
-        [j, _,_], updates = theano.scan(
-            _recurrence,
+        [J, _,_], updates = theano.scan(
+            fn=_recurrence,
             sequences=[x,y,negy],
             truncate_gradient=self.bptt_truncate,
             outputs_info=[None,
                           dict(initial=T.zeros(self.hidden_dim)),
                           dict(initial=T.zeros(self.hidden_dim))],
-            non_sequences=q_w)
+            non_sequences=q_w,
+            mode='DebugMode')
 
-        cost = T.sum(j)
+        cost = T.sum(J)
 
         lr=T.scalar("lr")
         gparams=[T.clip(T.grad(cost,p),-10,10) for p in self.params]

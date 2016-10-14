@@ -7,61 +7,55 @@ p=0.5
 n_batch=5
 NEPOCH=100
 
-n_input=100
-n_hidden=250
+n_input=50
+n_hidden=200
 maxlen=100
 cell='gru'
 optimizer='sgd'
 train_datafile='../data/billion.tr'
 test_datafile='../data/billion.te'
-word2index_file='../data/index2word.pkl'
-vocab_file='../data/vocab.txt'
+word2index_file='../data/word2index.pkl'
+vocab_file='../data/vocab.pkl'
 n_words_source=-1
-vocabulary_size=793473
+vocabulary_size=2000#793473
 
 disp_freq=100
 sample_freq=200
 save_freq=5000
 
 
-k = 2*1000
+k = 100
 alpha = 0.75
-
-with open(word2index_file,'r')as f:
-    word2index=pickle.load(f)
-vocab=open(vocab_file,'r').read().split('\n')
-
-q_dis = Q_dis(word2index,vocab,alpha)
-q_w = Q_w(word2index,vocab,alpha)
-print q_dis
-print q_w
-# create Q distribution
-
-# for each train_y create negative sampling vector index
-# print y_train[0]
-# neg_m = negative_sample(y_train[0],k,q_dis)
-# print neg_m
-# print neg_m.shape
-
 
 
 def train():
+    with open(word2index_file,'r')as f:
+        word2index=pickle.load(f)
+    with open(vocab_file,'r') as f:
+        vocab=pickle.load(f)
+    q_dis = Q_dis(word2index,vocab,alpha)
+    print 'qdis:',q_dis.shape
+    q_w = Q_w(word2index,vocab,alpha)
     # Load data
     print 'loading dataset...'
     train_data=TextIterator(train_datafile,n_words_source=n_words_source,maxlen=maxlen)
     test_data=TextIterator(test_datafile,n_words_source=n_words_source,maxlen=maxlen)
 
     print 'building model...'
-    model=GRULM(n_input,n_hidden,vocabulary_size)
+    model=GRULM(n_hidden,vocabulary_size)
     print 'training start...'
     start=time.time()
     for epoch in xrange(NEPOCH):
         error=0
         idx=0
         in_start=time.time()
-        for x,y in train_data:
+        for (x,y) in train_data:
+            print 'x',x.shape
+            print 'y',y.shape
             idx+=1
-            cost=model.train(x, y, negative_sample(y,k,q_dis), q_w,lr)
+            negy=negative_sample(y,k,q_dis,vocabulary_size)
+            print 'negy',negy.shape
+            cost=model.train(x, y, negy, q_w,lr)
             print 'index:',idx,'cost:',cost
             error+=np.sum(cost)
             if np.isnan(cost) or np.isinf(cost):

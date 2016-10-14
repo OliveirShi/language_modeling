@@ -9,48 +9,30 @@ import operator
 import theano
 
 
-def Q_dis(word2index,vocab,alpha):
-    """
-    create Q distribution for negative word sampling
-    when alpha is 0:
-    wc**alpha / sum(wc**alpha) -> uniform distrbution
-    wc**1 / sum(wc**1) -> unigram distribution
 
-    notice the q_dis do not include the <MASK/> and UNK
-    """
-    q_dis = []
-    for item in vocab:
-        print item[0],item[1]
-        tmp = [word2index[item[0]]]*int(item[1]**alpha)
-        # e.g. 'this' 342 -> [ 'this' , 'this' ,..,'this']
-        q_dis.extend(tmp)
-
-    return np.asarray(q_dis)
-
-def Q_w(word2index,vocab,alpha):
+def Q_w(vocab,alpha):
     """
     weight for blackout the 1/relative frequence of the word
     """
-    q_w = np.ones(len(vocab))
+    vocab_p = np.ones(len(vocab))
 
     q_t = 0
     for item in vocab:
         q_t = q_t + float(item[1]**alpha)
 
     for item in vocab:
-        q_w[word2index[item[0]]] = float(item[1]**alpha)/float(q_t)
+        vocab_p[item[0]] = float(item[1]**alpha)/float(q_t)
 
-    return np.asarray(q_w,dtype=theano.config.floatX)
+    return np.asarray(vocab_p,dtype=theano.config.floatX)
 
-def blackout(q_dis,k,i):
+def blackout(vocab_p,k,pos_index):
     """
     sampling K negative word from q_dis, Sk != i
     """
     ne_sample = []
-
     while len(ne_sample) < k:
-        p = np.random.randint(low=0,high=len(q_dis)-1,size=1)[0]
-        if q_dis[p] == i:
+        p = np.random.multinomial(1, vocab_p)
+        if p == pos_index:
             pass
         else:
             ne_sample.append(p)
@@ -58,13 +40,14 @@ def blackout(q_dis,k,i):
     return np.asarray(ne_sample)
 
 
-def negative_sample(y_train_i,k,q_dis):
+def negative_sample(pos_y,k,vocab_p):
     """
-    negative sampling for integer vector y_train_i
+    blackout sample for integer vector pos_y
     """
+
     neg_m = []
-    for i in y_train_i:
-        neg_m.append(blackout(q_dis,k,i))
+    for pos_index in pos_y:
+        neg_m.append(blackout(vocab_p,k,pos_index))
 
     return np.asarray(neg_m)
 
@@ -86,6 +69,7 @@ class TextIterator:
     def __init__(self,source,maxlen,n_words_source=-1):
 
         self.source=open(source,'r')
+        #self.word2index=word2index
         self.maxlen=maxlen
         self.n_words_source=n_words_source
         self.end_of_data=False
@@ -110,13 +94,27 @@ class TextIterator:
                     raise StopIteration
                 s=s.strip().split(' ')
 
+                s=[int(w) for w in s]
                 if self.n_words_source>0:
                     s=[int(w) if int(w) <self.n_words_source else 3 for w in s]
                 # filter long sentences
                 if len(s)>self.maxlen:
                     continue
-                return s
+                return (np.asarray(s[:-1]),np.asarray(s[1:]))
 
         except IOError:
             self.end_of_data=True
 
+def prepare_data(seqs_x):
+    lengths_x=[len(s)-1 for s in seqs_x]
+    n_samples=len(seqs_x)
+    maxlen_x=np.max(lengths_x)
+
+    x=np.zeros((maxlen_x,n_samples)).astype('int32')
+    y=np.zeros((maxlen_x,n_samples)).astype('int32')
+
+    for idx,s_x in enumerate(seqs_x):
+        x[:lengths_x[idx],idx]=s_x[:-1]
+        y[:lengths_x[idx],idx]=s_x[1:]
+
+    return x,y
