@@ -10,18 +10,17 @@ import theano
 
 
 
-def Q_w(vocab,alpha):
+def Q_w(word2index,vocab,alpha):
     """
     weight for blackout the 1/relative frequence of the word
     """
     vocab_p = np.ones(len(vocab))
-
     q_t = 0
     for item in vocab:
         q_t = q_t + float(item[1]**alpha)
 
     for item in vocab:
-        vocab_p[item[0]] = float(item[1]**alpha)/float(q_t)
+        vocab_p[word2index[item[0]]] = float(item[1]**alpha)/float(q_t)
 
     return np.asarray(vocab_p,dtype=theano.config.floatX)
 
@@ -31,7 +30,7 @@ def blackout(vocab_p,k,pos_index):
     """
     ne_sample = []
     while len(ne_sample) < k:
-        p = np.random.multinomial(1, vocab_p)
+        p = np.random.choice(len(vocab_p),1, p=vocab_p)
         if p == pos_index:
             pass
         else:

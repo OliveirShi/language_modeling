@@ -24,7 +24,7 @@ sample_freq=200
 save_freq=5000
 
 
-k = 100
+k = 10
 alpha = 0.75
 
 
@@ -33,16 +33,16 @@ def train():
         word2index=pickle.load(f)
     with open(vocab_file,'r') as f:
         vocab=pickle.load(f)
-    q_dis = Q_dis(word2index,vocab,alpha)
-    print 'qdis:',q_dis.shape
-    q_w = Q_w(word2index,vocab,alpha)
+    vocab_p = Q_w(word2index,vocab,alpha)
+    print 'vocab_probabilty:',vocab_p.shape
+
     # Load data
     print 'loading dataset...'
     train_data=TextIterator(train_datafile,n_words_source=n_words_source,maxlen=maxlen)
     test_data=TextIterator(test_datafile,n_words_source=n_words_source,maxlen=maxlen)
 
     print 'building model...'
-    model=GRULM(n_hidden,vocabulary_size)
+    #model=GRULM(n_hidden,vocabulary_size)
     print 'training start...'
     start=time.time()
     for epoch in xrange(NEPOCH):
@@ -50,12 +50,15 @@ def train():
         idx=0
         in_start=time.time()
         for (x,y) in train_data:
-            print 'x',x.shape
-            print 'y',y.shape
+            print 'x:',x.shape
+            print x
+            print 'y:',y.shape
+            print y
             idx+=1
-            negy=negative_sample(y,k,q_dis,vocabulary_size)
-            print 'negy',negy.shape
-            cost=model.train(x, y, negy, q_w,lr)
+            negy=negative_sample(y,k,vocab_p)
+            print 'negy:',negy.shape
+            print negy
+            cost=model.train(x, y, negy, vocab_p,lr)
             print 'index:',idx,'cost:',cost
             error+=np.sum(cost)
             if np.isnan(cost) or np.isinf(cost):

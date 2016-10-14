@@ -8,7 +8,6 @@ class GRULM:
         # Assign instance variables
         self.word_dim = word_dim
         self.hidden_dim = hidden_dim
-        print 'dim',self.word_dim,self.hidden_dim
         self.bptt_truncate = bptt_truncate
         # Initialize the network parameters
         init_E = np.random.uniform(-np.sqrt(1./word_dim), np.sqrt(1./word_dim), (hidden_dim, word_dim))
