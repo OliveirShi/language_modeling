@@ -1,31 +1,38 @@
-import os
-import numpy as np
 import time
-from utils_blackout import *
-from datetime import datetime
-from gru_blackout import GRUTheano
+from utils import *
+from grulm import GRULM
 
+lr=0.01
+p=0.5
+n_batch=5
+NEPOCH=100
 
-LEARNING_RATE = float(os.environ.get("LEARNING_RATE", "0.001"))
-VOCABULARY_SIZE = int(os.environ.get("VOCABULARY_SIZE", "2000"))
-EMBEDDING_DIM = int(os.environ.get("EMBEDDING_DIM", "48"))
-HIDDEN_DIM = int(os.environ.get("HIDDEN_DIM", "128"))
-NEPOCH = int(os.environ.get("NEPOCH", "20"))
-MODEL_OUTPUT_FILE = os.environ.get("MODEL_OUTPUT_FILE")
-INPUT_DATA_FILE = os.environ.get("INPUT_DATA_FILE", "./data/reddit-comments-2015.csv")
-PRINT_EVERY = int(os.environ.get("PRINT_EVERY", "25000"))
+n_input=100
+n_hidden=250
+maxlen=100
+cell='gru'
+optimizer='sgd'
+train_datafile='../data/billion.tr'
+test_datafile='../data/billion.te'
+word2index_file='../data/index2word.pkl'
+vocab_file='../data/vocab.txt'
+n_words_source=-1
+vocabulary_size=793473
 
-if not MODEL_OUTPUT_FILE:
-  ts = datetime.now().strftime("%Y-%m-%d-%H-%M")
-  MODEL_OUTPUT_FILE = "GRU-%s-%s-%s-%s.dat" % (ts, VOCABULARY_SIZE, EMBEDDING_DIM, HIDDEN_DIM)
+disp_freq=100
+sample_freq=200
+save_freq=5000
 
-# Load data
-x_train, y_train, word_to_index, index_to_word, sorted_vocab = load_data(INPUT_DATA_FILE, VOCABULARY_SIZE)
 
 k = 2*1000
-alpha = 0
-q_dis = Q_dis(word_to_index,sorted_vocab,alpha)
-q_w = Q_w(word_to_index,sorted_vocab,alpha)
+alpha = 0.75
+
+with open(word2index_file,'r')as f:
+    word2index=pickle.load(f)
+vocab=open(vocab_file,'r').read().split('\n')
+
+q_dis = Q_dis(word2index,vocab,alpha)
+q_w = Q_w(word2index,vocab,alpha)
 print q_dis
 print q_w
 # create Q distribution
@@ -36,20 +43,43 @@ print q_w
 # print neg_m
 # print neg_m.shape
 
-# the neg_m shape (len(s) , k) !
 
 
-# Build model
-model = GRUTheano(VOCABULARY_SIZE, hidden_dim=HIDDEN_DIM, bptt_truncate=-1)
+def train():
+    # Load data
+    print 'loading dataset...'
+    train_data=TextIterator(train_datafile,n_words_source=n_words_source,maxlen=maxlen)
+    test_data=TextIterator(test_datafile,n_words_source=n_words_source,maxlen=maxlen)
 
-# Print SGD step time
-t1 = time.time()
-c_o_t = model.step_check(x_train[10], y_train[10], negative_sample(y_train[10],k,q_dis), q_w)
-print c_o_t
-print c_o_t.shape
-t2 = time.time()
-print "SGD One Step time: %f milliseconds" % ((t2 - t1) * 1000.)
+    print 'building model...'
+    model=GRULM(n_input,n_hidden,vocabulary_size)
+    print 'training start...'
+    start=time.time()
+    for epoch in xrange(NEPOCH):
+        error=0
+        idx=0
+        in_start=time.time()
+        for x,y in train_data:
+            idx+=1
+            cost=model.train(x, y, negative_sample(y,k,q_dis), q_w,lr)
+            print 'index:',idx,'cost:',cost
+            error+=np.sum(cost)
+            if np.isnan(cost) or np.isinf(cost):
+                print 'NaN Or Inf detected!'
+                return -1
+            if idx % disp_freq==0:
+                print 'epoch:',epoch,'idx:',idx,'cost:',error/disp_freq
+                error=0
+            if idx%save_freq==0:
+                print 'dumping...'
+                save_model('model/parameters_%.2f.pkl'%(time.time()-start),model)
+            if idx % sample_freq==0:
+                print 'Sampling....'
+                #y_pred=model.predict(x,x_mask,n_batch)
+                #print y_pred
 
-# We do this every few examples to understand what's going on
+    print "Finished. Time = "+str(time.time()-start)
 
-train_with_sgd(model, x_train, y_train, k , q_dis, q_w,  learning_rate=LEARNING_RATE, nepoch=NEPOCH, decay=0.9)
+
+if __name__ == '__main__':
+    train()
