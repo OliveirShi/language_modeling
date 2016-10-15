@@ -1,14 +1,6 @@
-import csv
-import itertools
 import numpy as np
-import nltk
-import sys
-from os.path import isfile
 import cPickle as pickle
-import operator
 import theano
-
-
 
 def Q_w(word2index,vocab,alpha):
     """
@@ -30,7 +22,7 @@ def blackout(vocab_p,k,pos_index):
     """
     ne_sample = []
     while len(ne_sample) < k:
-        p = np.random.choice(len(vocab_p),1, p=vocab_p)
+        p = np.random.choice(len(vocab_p),1, p=vocab_p)[0]
         if p == pos_index:
             pass
         else:

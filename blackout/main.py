@@ -17,7 +17,7 @@ test_datafile='../data/billion.te'
 word2index_file='../data/word2index.pkl'
 vocab_file='../data/vocab.pkl'
 n_words_source=-1
-vocabulary_size=2000#793473
+vocabulary_size=793473
 
 disp_freq=100
 sample_freq=200
@@ -42,7 +42,7 @@ def train():
     test_data=TextIterator(test_datafile,n_words_source=n_words_source,maxlen=maxlen)
 
     print 'building model...'
-    #model=GRULM(n_hidden,vocabulary_size)
+    model=GRULM(n_hidden,vocabulary_size)
     print 'training start...'
     start=time.time()
     for epoch in xrange(NEPOCH):
