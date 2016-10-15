@@ -40,7 +40,7 @@ def negative_sample(pos_y,k,vocab_p):
     for pos_index in pos_y:
         neg_m.append(blackout(vocab_p,k,pos_index))
 
-    return np.asarray(neg_m)
+    return np.asarray(neg_m,dtype=np.int32)
 
 
 
