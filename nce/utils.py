@@ -2,21 +2,21 @@ import numpy as np
 import cPickle as pickle
 import theano
 
-def Q_w(word2index,vocab,alpha):
+def Q_w(vocab,alpha):
     """
     weight for blackout the 1/relative frequence of the word
     """
     vocab_p = np.ones(len(vocab))
     q_t = 0
     for item in vocab:
-        q_t = q_t + float(item[1]**alpha)
+        q_t = q_t + float(item**alpha)
 
-    for item in vocab:
-        vocab_p[word2index[item[0]]] = float(item[1]**alpha)/float(q_t)
+    for idx in range(len(vocab)):
+        vocab_p[idx] = float(vocab[idx]**alpha)/float(q_t)
 
     return np.asarray(vocab_p,dtype=theano.config.floatX)
 
-def nce(vocab_p,k,pos_index):
+def blackout(vocab_p,k,pos_index):
     """
     sampling K negative word from q_dis, Sk != i
     """
@@ -33,14 +33,14 @@ def nce(vocab_p,k,pos_index):
 
 def negative_sample(pos_y,k,vocab_p):
     """
-    nce sample for integer vector pos_y
+    blackout sample for integer vector pos_y
     """
 
     neg_m = []
     for pos_index in pos_y:
-        neg_m.append(nce(vocab_p,k,pos_index))
+        neg_m.append(blackout(vocab_p,k,pos_index))
 
-    return np.asarray(neg_m)
+    return np.asarray(neg_m,dtype=np.int32)
 
 
 
@@ -91,7 +91,7 @@ class TextIterator:
                 # filter long sentences
                 if len(s)>self.maxlen:
                     continue
-                return (np.asarray(s[:-1]),np.asarray(s[1:]))
+                return (np.asarray(s[:-1],dtype=np.int32),np.asarray(s[1:],dtype=np.int32))
 
         except IOError:
             self.end_of_data=True
