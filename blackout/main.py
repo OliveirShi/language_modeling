@@ -24,16 +24,14 @@ sample_freq=200
 save_freq=5000
 
 
-k = 10
+k = 1000
 alpha = 0.75
 
 
 def train():
-    with open(word2index_file,'r')as f:
-        word2index=pickle.load(f)
     with open(vocab_file,'r') as f:
         vocab=pickle.load(f)
-    vocab_p = Q_w(word2index,vocab,alpha)
+    vocab_p = Q_w(vocab,alpha)
     print 'vocab_probabilty:',vocab_p.shape
 
     # Load data
@@ -50,14 +48,8 @@ def train():
         idx=0
         in_start=time.time()
         for (x,y) in train_data:
-            print 'x:',x.shape
-            print x
-            print 'y:',y.shape
-            print y
             idx+=1
             negy=negative_sample(y,k,vocab_p)
-            print 'negy:',negy.shape
-            print negy
             cost=model.train(x, y, negy, vocab_p,lr)
             print 'index:',idx,'cost:',cost
             error+=np.sum(cost)

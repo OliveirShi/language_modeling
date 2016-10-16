@@ -2,17 +2,17 @@ import numpy as np
 import cPickle as pickle
 import theano
 
-def Q_w(word2index,vocab,alpha):
+def Q_w(vocab,alpha):
     """
     weight for blackout the 1/relative frequence of the word
     """
     vocab_p = np.ones(len(vocab))
     q_t = 0
     for item in vocab:
-        q_t = q_t + float(item[1]**alpha)
+        q_t = q_t + float(item**alpha)
 
-    for item in vocab:
-        vocab_p[word2index[item[0]]] = float(item[1]**alpha)/float(q_t)
+    for idx in range(len(vocab)):
+        vocab_p[idx] = float(vocab[idx]**alpha)/float(q_t)
 
     return np.asarray(vocab_p,dtype=theano.config.floatX)
 
@@ -91,7 +91,7 @@ class TextIterator:
                 # filter long sentences
                 if len(s)>self.maxlen:
                     continue
-                return (np.asarray(s[:-1]),np.asarray(s[1:]))
+                return (np.asarray(s[:-1],dtype=np.int32),np.asarray(s[1:],dtype=np.int32))
 
         except IOError:
             self.end_of_data=True

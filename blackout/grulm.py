@@ -88,8 +88,7 @@ class GRULM:
             outputs_info=[None,
                           dict(initial=T.zeros(self.hidden_dim)),
                           dict(initial=T.zeros(self.hidden_dim))],
-            non_sequences=q_w,
-            mode='DebugMode')
+            non_sequences=q_w)
 
         cost = T.sum(J)
 
