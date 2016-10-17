@@ -14,11 +14,10 @@ def load_model(f,model):
     return model
 
 class TextIterator:
-    def __init__(self,source,index2word_file,n_batch,maxlen,n_words_source=-1):
+    def __init__(self,source,n_batch,maxlen,n_words_source=-1):
 
         self.source=open(source,'r')
-        with open(index2word_file,'rb')as f:
-            self.index2word=pickle.load(f)
+
 
         self.n_batch=n_batch
         self.maxlen=maxlen

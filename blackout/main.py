@@ -4,7 +4,7 @@ from grulm import GRULM
 
 lr=0.01
 p=0.5
-n_batch=5
+n_batch=50
 NEPOCH=100
 
 n_input=50
@@ -12,12 +12,11 @@ n_hidden=200
 maxlen=100
 cell='gru'
 optimizer='sgd'
-train_datafile='../data/billion.tr'
-test_datafile='../data/billion.te'
-word2index_file='../data/word2index.pkl'
-vocab_file='../data/vocab.pkl'
+train_datafile='../ptb/idx_ptb.train.txt'
+valid_datafile='../ptb/idx_ptb.valid.txt'
+test_datafile='../ptb/idx_ptb.test.txt'
 n_words_source=-1
-vocabulary_size=793473
+vocabulary_size=10001
 
 disp_freq=100
 sample_freq=200
