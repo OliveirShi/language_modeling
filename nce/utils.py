@@ -9,10 +9,10 @@ def Q_w(vocab,alpha):
     vocab_p = np.ones(len(vocab))
     q_t = 0
     for item in vocab:
-        q_t = q_t + float(item**alpha)
+        q_t = q_t + float(item[1]**alpha)
 
     for idx in range(len(vocab)):
-        vocab_p[idx] = float(vocab[idx]**alpha)/float(q_t)
+        vocab_p[idx] = float(vocab[idx][1]**alpha)/float(q_t)
 
     return np.asarray(vocab_p,dtype=theano.config.floatX)
 

@@ -4,11 +4,12 @@ from updates import sgd
 import theano.tensor as T
 
 class GRULM:
-    def __init__(self,hidden_dim, word_dim, bptt_truncate=-1):
+    def __init__(self,hidden_dim, word_dim, bptt_truncate=-1,k=10):
         # Assign instance variables
         self.word_dim = word_dim
         self.hidden_dim = hidden_dim
         self.bptt_truncate = bptt_truncate
+        self.k=k
         # Initialize the network parameters
         init_E = np.random.uniform(-np.sqrt(1./word_dim), np.sqrt(1./word_dim), (hidden_dim, word_dim))
         self.E = theano.shared(value=init_E.astype(theano.config.floatX),name='E')

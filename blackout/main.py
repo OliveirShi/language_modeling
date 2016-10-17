@@ -32,7 +32,6 @@ def train():
     with open(vocab_freq_file,'r') as f:
         vocab_freq=pickle.load(f)
     vocab_p = Q_w(vocab_freq,alpha)
-    print 'vocab_probabilty:',vocab_p.shape
 
     # Load data
     print 'loading dataset...'

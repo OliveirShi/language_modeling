@@ -4,7 +4,7 @@ from grulm import GRULM
 
 lr=0.01
 p=0.5
-n_batch=5
+n_batch=50
 NEPOCH=100
 
 n_input=30
@@ -12,29 +12,26 @@ n_hidden=20
 maxlen=30
 cell='gru'
 optimizer='sgd'
-train_datafile='../data/billion.tr'
-test_datafile='../data/billion.te'
-word2index_file='../data/word2index.pkl'
-vocab_file='../data/vocab.pkl'
+train_datafile='../ptb/idx_ptb.train.txt'
+valid_datafile='../ptb/idx_ptb.valid.txt'
+test_datafile='../ptb/idx_ptb.test.txt'
+vocab_freq_file='../ptb/vocab_freq.pkl'
 n_words_source=-1
-vocabulary_size=793473
+vocabulary_size=10001
 
 disp_freq=100
 sample_freq=200
 save_freq=5000
 
 
-k = 10
+k = 200
 alpha = 0.75
 
 
 def train():
-    with open(word2index_file,'r')as f:
-        word2index=pickle.load(f)
-    with open(vocab_file,'r') as f:
-        vocab=pickle.load(f)
-    vocab_p = Q_w(word2index,vocab,alpha)
-    print 'vocab_probabilty:',vocab_p.shape
+    with open(vocab_freq_file,'r') as f:
+        vocab_freq=pickle.load(f)
+    vocab_p = Q_w(vocab_freq,alpha)
 
     # Load data
     print 'loading dataset...'
@@ -42,7 +39,7 @@ def train():
     test_data=TextIterator(test_datafile,n_words_source=n_words_source,maxlen=maxlen)
 
     print 'building model...'
-    model=GRULM(n_hidden,vocabulary_size)
+    model=GRULM(n_hidden,vocabulary_size,k)
     print 'training start...'
     start=time.time()
     for epoch in xrange(NEPOCH):
@@ -50,14 +47,8 @@ def train():
         idx=0
         in_start=time.time()
         for (x,y) in train_data:
-            print 'x:',x.shape
-            print x
-            print 'y:',y.shape
-            print y
             idx+=1
             negy=negative_sample(y,k,vocab_p)
-            print 'negy:',negy.shape
-            print negy
             cost=model.train(x, y, negy, vocab_p,lr)
             print 'index:',idx,'cost:',cost
             error+=np.sum(cost)
