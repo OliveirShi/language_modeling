@@ -1,6 +1,6 @@
 from theano.tensor.shared_randomstreams import RandomStreams
 
-from softmax import softmax
+
 from gru import GRU
 from lstm import LSTM
 from level_softmax import level_softmax

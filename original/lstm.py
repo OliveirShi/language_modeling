@@ -63,7 +63,7 @@ class LSTM:
 
         # Params
         self.params=[self.Wi,self.Wf,self.Wc,self.Wo,
-                     self.bi,self.bf,self.bc,self.bo];
+                     self.bi,self.bf,self.bc,self.bo]
 
         self.build()
 

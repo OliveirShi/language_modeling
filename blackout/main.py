@@ -15,6 +15,7 @@ optimizer='sgd'
 train_datafile='../ptb/idx_ptb.train.txt'
 valid_datafile='../ptb/idx_ptb.valid.txt'
 test_datafile='../ptb/idx_ptb.test.txt'
+vocab_freq_file='../ptb/vocab_freq.pkl'
 n_words_source=-1
 vocabulary_size=10001
 
@@ -23,14 +24,14 @@ sample_freq=200
 save_freq=5000
 
 
-k = 1000
+k = 200
 alpha = 0.75
 
 
 def train():
-    with open(vocab_file,'r') as f:
-        vocab=pickle.load(f)
-    vocab_p = Q_w(vocab,alpha)
+    with open(vocab_freq_file,'r') as f:
+        vocab_freq=pickle.load(f)
+    vocab_p = Q_w(vocab_freq,alpha)
     print 'vocab_probabilty:',vocab_p.shape
 
     # Load data
@@ -49,6 +50,7 @@ def train():
         for (x,y) in train_data:
             idx+=1
             negy=negative_sample(y,k,vocab_p)
+
             cost=model.train(x, y, negy, vocab_p,lr)
             print 'index:',idx,'cost:',cost
             error+=np.sum(cost)
