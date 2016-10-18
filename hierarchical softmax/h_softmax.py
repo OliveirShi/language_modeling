@@ -108,7 +108,7 @@ class H_Softmax(object):
                     self.result_dict[node.value]=node
 
         # Let's also put the tree into a matrix
-        tree_matrix_val=np.ones((self.node_count+self.label_count,4),dtype=np.int)* -1
+        tree_matrix_val=np.ones((self.node_count+self.label_count,4),dtype=np.int32)* -1
 
         '''
         0: left tree node index
@@ -140,9 +140,9 @@ class H_Softmax(object):
             self.max_route_len=max(len(self.routes[-1]),self.max_route_len)
 
         
-        self.route_node_matrix_val = np.zeros((len(self.result_dict.keys()), self.max_route_len), dtype=np.int)
-        self.route_choice_matrix_val=np.zeros((len(self.result_dict.keys()),self.max_route_len),dtype=np.int)
-        self.mask_matrix_val=np.zeros((len(self.result_dict.keys()),self.max_route_len),dtype=np.int)
+        self.route_node_matrix_val = np.zeros((len(self.result_dict.keys()), self.max_route_len), dtype=np.int32)
+        self.route_choice_matrix_val=np.zeros((len(self.result_dict.keys()),self.max_route_len),dtype=np.int32)
+        self.mask_matrix_val=np.zeros((len(self.result_dict.keys()),self.max_route_len),dtype=np.int32)
 
         # Route matrix
         # mask-matrix
