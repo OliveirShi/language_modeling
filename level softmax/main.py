@@ -38,6 +38,8 @@ def train():
         idx=0
         in_start=time.time()
         for x,x_mask,y,y_mask in train_data:
+            if x.shape[1]!=n_batch:
+                continue
             idx+=1
             cost=model.train(x,x_mask,y,y_mask,n_batch,lr)
             print 'index:',idx,'cost:',cost

@@ -47,6 +47,8 @@ def train():
         idx=0
         in_start=time.time()
         for (x,y) in train_data:
+            if x.shape[1]!=n_batch:
+                continue
             idx+=1
             negy=negative_sample(y,k,vocab_p)
 
