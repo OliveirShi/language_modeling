@@ -8,10 +8,6 @@
 
 -  noise contrastive estimation for RNNLM
 
-## IS
-
-- importance sampling method for RNNLM
-
 ## cnn_highway
 
 -  cnn layer+ highway layer for RNNLM
