@@ -5,7 +5,7 @@ from utils import TextIterator,save_model
 
 lr=0.01
 p=0.5
-n_batch=50
+n_batch=100
 NEPOCH=100
 
 n_input=100
@@ -41,8 +41,9 @@ def train():
             if x.shape[1]!=n_batch:
                 continue
             idx+=1
+            beg_time=time.time()
             cost=model.train(x,x_mask,y,y_mask,n_batch,lr)
-            print 'index:',idx,'cost:',cost
+            print 'index:',idx,'time:',time.time()-beg_time,'cost:',cost
             error+=np.sum(cost)
             if np.isnan(cost) or np.isinf(cost):
                 print 'NaN Or Inf detected!'
