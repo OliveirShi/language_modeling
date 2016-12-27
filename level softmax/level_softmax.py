@@ -46,11 +46,12 @@ class level_softmax:
             the third dimension is n_hidden.
         :return:
         '''
-        self.activation = h_softmax(self.x,
+        activation = h_softmax(self.x,
                                     self.x.shape[0], self.n_output,
                                     self.level1_size,self.level2_size,
                                     self.W1, self.b1, self.W2, self.b2,
                                     self.y)
+        self.activation=T.log(activation)
 
         predicted=h_softmax(self.x, self.x.shape[0], self.x.shape[1], self.level1_size,
                          self.level2_size, self.W1, self.b1, self.W2, self.b2)

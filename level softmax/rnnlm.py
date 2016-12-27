@@ -5,6 +5,10 @@ from gru import GRU
 from lstm import LSTM
 from level_softmax import level_softmax
 from updates import *
+import logging
+
+logging.basicConfig(logging.DEBUG)
+logger=logging.getLogger(__name__)
 
 class RNNLM:
     def __init__(self,n_input,n_hidden,n_output,cell='gru',optimizer='sgd',p=0.5):
@@ -33,7 +37,7 @@ class RNNLM:
         self.build()
 
     def build(self):
-        print '     building rnn cell...'
+        logger.info('building rnn cell...')
         if self.cell=='gru':
             hidden_layer=GRU(self.rng,
                              self.n_input,self.n_hidden,self.n_batch,
@@ -44,7 +48,7 @@ class RNNLM:
                               self.n_input,self.n_hidden,self.n_batch,
                               self.x,self.E,self.x_mask,
                               self.is_train,self.p)
-        print '  building softmax output layer...'
+        logger.info('building softmax output layer...')
         output_layer=level_softmax(self.n_hidden,self.n_output,hidden_layer.activation,self.y)
         self.params=[self.E,]
         self.params+=hidden_layer.params

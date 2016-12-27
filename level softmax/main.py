@@ -2,6 +2,9 @@ import time
 
 from rnnlm import *
 from utils import TextIterator,save_model
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger=logging.getLogger(__name__)
 
 lr=0.01
 p=0.5
@@ -25,13 +28,13 @@ save_freq=5000
 
 def train():
     # Load data
-    print 'loading dataset...'
+    logger.info( 'loading dataset...')
     train_data=TextIterator(train_datafile,n_words_source=n_words_source,n_batch=n_batch,maxlen=maxlen)
     test_data=TextIterator(test_datafile,n_words_source=n_words_source,n_batch=n_batch,maxlen=maxlen)
 
-    print 'building model...'
+    logger.info('building model...' )
     model=RNNLM(n_input,n_hidden,vocabulary_size,cell,optimizer,p)
-    print 'training start...'
+    logger.info( 'training start...')
     start=time.time()
     for epoch in xrange(NEPOCH):
         error=0
@@ -45,20 +48,20 @@ def train():
             print 'index:',idx,'cost:',cost
             error+=np.sum(cost)
             if np.isnan(cost) or np.isinf(cost):
-                print 'NaN Or Inf detected!'
+                logger.warning( 'NaN Or Inf detected!')
                 return -1
             if idx % disp_freq==0:
-                print 'epoch:',epoch,'idx:',idx,'cost:',error/disp_freq
+                logger.info( 'epoch:',epoch,'idx:',idx,'cost:',error/disp_freq)
                 error=0
             if idx%save_freq==0:
-                print 'dumping...'
+                logger.info('dumping...')
                 save_model('model/parameters_%.2f.pkl'%(time.time()-start),model)
             if idx % sample_freq==0:
-                print 'Sampling....'
+                logger.info('Sampling....')
                 y_pred=model.predict(x,x_mask,n_batch)
                 print y_pred
 
-    print "Finished. Time = "+str(time.time()-start)
+    logger.debug("Finished. Time = "+str(time.time()-start))
 
 
 if __name__ == '__main__':
