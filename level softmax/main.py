@@ -6,7 +6,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger=logging.getLogger(__name__)
 
-lr=0.01
+lr=0.1
 p=0.5
 n_batch=50
 NEPOCH=100
@@ -22,7 +22,7 @@ test_datafile='../ptb/idx_ptb.test.txt'
 n_words_source=-1
 vocabulary_size=10001
 
-disp_freq=100
+disp_freq=10
 sample_freq=200
 save_freq=5000
 
@@ -45,13 +45,13 @@ def train():
                 continue
             idx+=1
             cost=model.train(x,x_mask,y,y_mask,n_batch,lr)
-            print 'index:',idx,'cost:',cost
-            error+=np.sum(cost)
+            #print 'index:',idx,'cost:',cost
+            error+=cost
             if np.isnan(cost) or np.isinf(cost):
                 logger.warning( 'NaN Or Inf detected!')
                 return -1
             if idx % disp_freq==0:
-                logger.info( 'epoch:',epoch,'idx:',idx,'cost:',error/disp_freq)
+                logger.info('epoch:%d, idx:%d, cost: %.3f',epoch,idx,error/disp_freq)#
                 error=0
             if idx%save_freq==0:
                 logger.info('dumping...')

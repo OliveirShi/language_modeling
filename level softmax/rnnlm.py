@@ -7,7 +7,7 @@ from level_softmax import level_softmax
 from updates import *
 import logging
 
-logging.basicConfig(logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 logger=logging.getLogger(__name__)
 
 class RNNLM:
@@ -48,7 +48,7 @@ class RNNLM:
                               self.n_input,self.n_hidden,self.n_batch,
                               self.x,self.E,self.x_mask,
                               self.is_train,self.p)
-        logger.info('building softmax output layer...')
+        logger.info('building softmax output layer')
         output_layer=level_softmax(self.n_hidden,self.n_output,hidden_layer.activation,self.y)
         self.params=[self.E,]
         self.params+=hidden_layer.params
@@ -70,5 +70,5 @@ class RNNLM:
 
 
     def categorical_crossentropy(self,y_pred):
-        return T.sum(y_pred*self.y_mask.flatten())/T.sum(self.y_mask)
+        return -T.sum(T.log(y_pred)*self.y_mask.flatten())/T.sum(self.y_mask)
     
