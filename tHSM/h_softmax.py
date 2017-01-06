@@ -1,6 +1,8 @@
 import numpy as np
 import theano
 import theano.tensor as T
+import Queue
+import cPickle as pickle
 
 class Softmaxlayer(object):
     def __init__(self,X,y,maskY,shape):
@@ -40,37 +42,140 @@ class RessultNode(object):
     def __repr__(self):
         return '<'+str(self.value)+'>'
 
-def build_binary_tree(values):
-    current_layer=[]
-    for v in values:
-        current_layer.append(RessultNode(value=v))
-    layers=[current_layer,]
-    count=0
-    while(len(current_layer) > 1):
-        pairs=[]
-        if len(current_layer) > 1:
-            while(len(current_layer)>1):
-                pairs.append(current_layer[:2])
-                current_layer=current_layer[2:]
-        else:
-            pairs=[current_layer]
-            current_layer=[]
-        new_layer=[]
-        for p in pairs:
-            tn=TreeNode(index=count,left=p[0],right=p[1])
-            count+=1
-            p[0].parent=tn
-            p[0].parent_choice=-1
-            p[1].parent=tn
-            p[1].parent_choice=1
-            new_layer.append(tn)
-        if len(current_layer)>0:
-            new_layer.extend(current_layer)
-            current_layer=[]
-        layers.append(new_layer)
-        current_layer=new_layer
 
-    return layers
+
+
+class HuffmanNode(object):
+    def __init__(self,left=None,right=None,root=None):
+        self.left=left
+        self.right=right
+
+    def children(self):
+        return self.left,self.right
+
+    def preorder(self,path=None,collector=None):
+        if collector is None:
+            collector=[]
+        if path is None:
+            path=[]
+
+        if self.left:
+            if isinstance(self.left[1],HuffmanNode):
+                self.left[1].preorder(path+[-1],collector)
+            else:
+                collector.append((self.left[1],self.left[0],path+[-1]))
+        if self.right:
+            if isinstance(self.right[1],HuffmanNode):
+                self.right[1].preorder(path+[1],collector)
+            else:
+                collector.append((self.right[1],self.right[0],path+[1]))
+        return collector
+
+def pad_bitstr(bitstr):
+    """
+    :param bitstr:
+    :type bitstr: list
+    :return: padded list of bits
+    """
+    max_bit_len = 0
+    for bits in bitstr:
+        if len(bits) > max_bit_len:
+            max_bit_len = len(bits)
+    for bits in bitstr:
+        bits.extend([0] * (max_bit_len-len(bits)))
+
+    return bitstr
+
+
+def pad_virtual_class(clses, pad_value):
+    max_cls_len = 0
+    for nodes in clses:
+        if len(nodes) > max_cls_len:
+            max_cls_len = len(nodes)
+    for nodes in clses:
+        nodes.extend([pad_value] * (max_cls_len-len(nodes)))
+
+    return clses
+
+def build_huffman_tree(frequenties):
+    Q=Queue.PriorityQueue()
+    for v in frequenties:
+        Q.put(v)
+    while Q.qsize()>1:
+        l,r=Q.get(),Q.get()
+        node=HuffmanNode(l,r)
+        Q.put((l[0]+r[0],node))
+    return Q.get()
+
+def prefix_generator(s, start=0, end=None):
+    if end is None:
+        end = len(s) + 1
+    for idx in range(start, end):
+        yield s[:idx]
+
+def load_huffman_tree(rel_freq,meta_file=None):
+
+    #with file(meta_file, 'rb') as f:
+    #    meta = pickle.load(f)
+    #    rel_freq = meta['rel_freq']
+    freq = zip(rel_freq, range(len(rel_freq)))
+    tree = build_huffman_tree(freq)[1]
+    x = tree.preorder()
+    y = sorted(x, key=lambda z: z[1], reverse=True)
+    bitstr = []
+    for _, _, bitstr in y:
+        bitstr.append(bitstr[:-1])
+
+    z=[]
+    for wordindex,_,bits in y:
+        z.append((wordindex,bits,list(prefix_generator(bits,end=len(bits)))))
+
+    clses = set()
+    for _, _, ele in z:
+        for i in ele:
+            clses.add(''.join('%+d' % j for j in i))
+    idx2clses = sorted(clses, key=lambda ele: len(ele))
+    cls2idx = dict(((cls, idx) for idx, cls in enumerate(idx2clses)))
+    w = map(lambda x: (x[0], x[1], [cls2idx[''.join('%+d' % j for j in p)] for p in x[2]]), z)
+
+    tmp1, tmp2 = [], []
+    for _, bits, cls_idx in w:
+        tmp1.append(bits)
+        tmp2.append(cls_idx)
+    pad_bitstr(tmp1)
+    pad_virtual_class(tmp2, pad_value=len(idx2clses))
+    assert len(freq) == len(w)
+    idx2cls = [None] * len(freq)
+    idx2bitstr = [None] * len(freq)
+    for idx, bitstr_, cls_ in w:
+        idx2cls[idx] = cls_
+        idx2bitstr[idx] = bitstr_
+
+    idx2cls = np.array(idx2cls, dtype='int32')
+    idx2bitstr = np.array(idx2bitstr, dtype='int8')
+
+    return idx2cls, idx2bitstr, idx2bitstr != 0
+
+
+
+if __name__ == '__main__':
+    freq = [
+        (8.167, 'a'), (1.492, 'b'), (2.782, 'c'), (4.253, 'd'),
+        (12.702, 'e'),(2.228, 'f'), (2.015, 'g'), (6.094, 'h'),
+        (6.966, 'i'), (0.153, 'j'), (0.747, 'k'), (4.025, 'l'),
+        (2.406, 'm'), (6.749, 'n'), (7.507, 'o'), (1.929, 'p'),
+        (0.095, 'q'), (5.987, 'r'), (6.327, 's'), (9.056, 't'),
+        (2.758, 'u'), (1.037, 'v'), (2.365, 'w'), (0.150, 'x'),
+        (1.974, 'y'), (0.074, 'z')]
+    load_huffman_tree(freq)
+
+
+def prefix_generator(s, start=0, end=None):
+    if end is None:
+        end = len(s) + 1
+    for idx in range(start, end):
+        yield s[:idx]
+
 
 class H_Softmax(object):
 
@@ -184,6 +289,25 @@ class H_Softmax(object):
 
         cost=log_sigmoid*self.maskY   # matrix element-wise dot
         self.activation=cost.sum()/self.maskY.sum()
+
+
+
+    def get_output(self, train=False):
+
+
+        cls_idx = ins['cls_idx']
+        word_bits_mask = ins['word_bitstr_mask']
+
+        wp = self.wp_matrix[cls_idx]  # (n_s, n_t, n_n, d_l)
+        # node_bias = self.b[cls_idx]                           # (n_s, n_t, n_n)
+
+        # score = T.sum(features * node_embeds, axis=-1) + node_bias         # (n_s, n_t, n_n)
+        node = T.sum( wp*x.dimshuffle(0, 1, 'x', 2), axis=-1)  # (n_s, n_t, n_n)
+        prob_ = T.nnet.sigmoid(node * word_bits_mask)  # (n_s, n_t, n_n)
+        prob = T.switch(T.eq(word_bits_mask, 0.0), 1.0, prob_)  # (n_s, n_t, n_n)
+        log_prob = T.sum(T.log(self.eps + prob), axis=-1)  # (n_s, n_t)
+        return log_prob
+
 
 
     def build_predict(self):

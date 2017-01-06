@@ -57,13 +57,13 @@ def build_binary_tree(values):
             current_layer=[]
         new_layer=[]
         for p in pairs:
-            tn=TreeNode(index=count,left=p[0],right=p[1])
+            node=TreeNode(index=count,left=p[0],right=p[1])
             count+=1
-            p[0].parent=tn
+            p[0].parent=node
             p[0].parent_choice=-1
-            p[1].parent=tn
+            p[1].parent=node
             p[1].parent_choice=1
-            new_layer.append(tn)
+            new_layer.append(node)
         if len(current_layer)>0:
             new_layer.extend(current_layer)
             current_layer=[]
@@ -151,11 +151,11 @@ class H_Softmax(object):
                 try:
                     self.route_node_matrix_val[i][a]=route[a][0].index
                     self.route_choice_matrix_val[i][a]=route[a][1]
-                    self.mask_matrix_val[i][a]=1.0
+                    self.mask_matrix_val[i][a]=1
                 except:
                     self.route_node_matrix_val[i][a]=0
                     self.route_choice_matrix_val[i][a]=0
-                    self.mask_matrix_val[i][a]=0.0
+                    self.mask_matrix_val[i][a]=0
 
         self.tree_matrix=theano.shared(value=tree_matrix_val,name='tree_matrix',borrow=True)
         self.route_node_matrix=theano.shared(value=self.route_choice_matrix_val,name=self.prefix+'route_node_matrix',borrow=True)
@@ -170,18 +170,13 @@ class H_Softmax(object):
         self.params=[self.wp_matrix,]
 
     def build_graph(self):
-        # 1
         nodes=self.route_node_matrix[self.y]
         choices=self.route_choice_matrix[self.y]
         mask=self.mask_matrix[self.y]
-        # 2.
         wp=self.wp_matrix[nodes]
-        # feature.dimshuffle(0,1,'x',2)
+
         node=T.sum(wp * self.x.dimshuffle(0,1,'x',2),axis=-1)
-
-        #log_sigmoid=-T.mean(T.log(T.nnet.sigmoid(node*choices))*mask,axis=-1)
         log_sigmoid=T.mean(T.log(1+T.exp(-node*choices))*mask,axis=-1)
-
         cost=log_sigmoid*self.maskY   # matrix element-wise dot
         self.activation=cost.sum()/self.maskY.sum()
 
