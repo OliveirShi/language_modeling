@@ -3,8 +3,11 @@ import time
 from rnnlm import *
 from utils import TextIterator,save_model
 
-lr=0.01
-p=0.5
+import logging
+
+
+lr=0.5
+p=0
 n_batch=100
 NEPOCH=100
 
@@ -22,12 +25,13 @@ vocabulary_size=10001
 disp_freq=100
 sample_freq=200
 save_freq=5000
+clip_freq=2000
 
-def train():
+def train(lr):
     # Load data
     print 'loading dataset...'
-    train_data=TextIterator(train_datafile,n_words_source=n_words_source,n_batch=n_batch,maxlen=maxlen)
-    test_data=TextIterator(test_datafile,n_words_source=n_words_source,n_batch=n_batch,maxlen=maxlen)
+    train_data=TextIterator(train_datafile,n_words_source=n_words_source,n_batch=n_batch)
+    test_data=TextIterator(test_datafile,n_words_source=n_words_source,n_batch=n_batch)
 
     print 'building model...'
     model=RNNLM(n_input,n_hidden,vocabulary_size,cell,optimizer,p)
@@ -38,12 +42,12 @@ def train():
         idx=0
         in_start=time.time()
         for x,x_mask,y,y_mask in train_data:
-            if x.shape[1]!=n_batch:
-                continue
+
             idx+=1
             beg_time=time.time()
+            print x.shape
             cost=model.train(x,x_mask,y,y_mask,n_batch,lr)
-            print 'index:',idx,'time:',time.time()-beg_time,'cost:',cost
+            print 'index:',idx,'time:',time.time()-beg_time,'cost:',cost,'lr:',lr
             error+=np.sum(cost)
             if np.isnan(cost) or np.isinf(cost):
                 print 'NaN Or Inf detected!'
@@ -58,9 +62,13 @@ def train():
                 print 'Sampling....'
                 y_pred=model.predict(x,x_mask,n_batch)
                 print y_pred
+            if idx%clip_freq==0:
+                print 'cliping learning rate:',
+                lr=lr/2
+                print lr
 
     print "Finished. Time = "+str(time.time()-start)
 
 
 if __name__ == '__main__':
-    train()
+    train(lr=lr)

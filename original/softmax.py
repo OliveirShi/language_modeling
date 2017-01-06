@@ -25,7 +25,7 @@ class softmax:
     def build(self):
 
         self.activation=T.nnet.softmax(T.dot(self.x,self.W)+self.b)
-        self.prediction=T.argmax(self.activation,axis=1)
+        self.predict=T.argmax(self.activation,axis=-1)
         
 
         

@@ -95,6 +95,3 @@ class GRU:
             self.activation=T.switch(T.eq(self.is_train,1),h*drop_mask,h*(1-self.p))
         else:
             self.activation=T.switch(T.eq(self.is_train,1),h,h)
-            
-                
-        

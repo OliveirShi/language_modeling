@@ -103,7 +103,7 @@ class LSTM:
         [h,c],_=theano.scan(fn=_recurrence,
                             sequences=[self.x,self.mask],
                             truncate_gradient=-1,
-                            output_info=[dict(initial=T.zeros(self.n_hidden)),
+                            outputs_info=[dict(initial=T.zeros(self.n_hidden)),
                                          dict(initial=T.zeros(self.n_hidden))])
 
         # Dropout
@@ -112,8 +112,3 @@ class LSTM:
             self.activation=T.switch(T.eq(self.is_train,1),h*drop_mask,h*(1-self.p))
         else:
             self.activation=T.switch(T.eq(self.is_train,1),h,h)
-        
-
-        
-            
-                    
