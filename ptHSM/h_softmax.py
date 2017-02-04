@@ -35,7 +35,7 @@ class RessultNode(object):
     def __init__(self,value=None,parent=None):
         self.value=value
         self.parent=parent
-        self.index='res:'+str(self.value)
+        self.index=str(self.value)
 
     def __repr__(self):
         return '<'+str(self.value)+'>'

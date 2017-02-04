@@ -2,7 +2,6 @@ import numpy as np
 import theano
 import theano.tensor as T
 import Queue
-import cPickle as pickle
 
 class Softmaxlayer(object):
     def __init__(self,X,y,maskY,shape):
@@ -22,151 +21,71 @@ class Softmaxlayer(object):
         y_pred,_=theano.scan(fn=_step,sequences=self.X)
         self.activation=T.nnet.categorical_crossentropy(y,y_pred*maskY)
 
-class TreeNode(object):
-    def __init__(self,index=None,left=None,right=None,parent=None,parent_choice=None):
-        self.index=index
-        self.right=right
-        self.left=left
-        self.parent=parent
-        self.parent_choice=parent_choice
-
-    def __repr__(self):
-        return '<'+str(self.index)+', 0:'+str(self.left.index)+', 1:'+str(self.right.index)+'>'
-
-class RessultNode(object):
-    def __init__(self,value=None,parent=None):
-        self.value=value
-        self.parent=parent
-        self.index='res:'+str(self.value)
-
-    def __repr__(self):
-        return '<'+str(self.value)+'>'
-
-
 
 
 class HuffmanNode(object):
-    def __init__(self,left=None,right=None,root=None):
+    def __init__(self,left=None,right=None,index=None):
+
         self.left=left
         self.right=right
+        self.index=index
 
-    def children(self):
-        return self.left,self.right
+    def __repr__(self):
+        string=str(self.index)
+        if self.left:
+            string+=', -1:'+str(self.left.index)
+        if self.right:
+            string+=', +1:'+str(self.right.index)
+        return string
 
-    def preorder(self,path=None,collector=None):
+    def preorder(self,polarity=None,param=None,collector=None):
         if collector is None:
             collector=[]
-        if path is None:
-            path=[]
+        if polarity is None:
+            polarity=[]
+        if param is None:
+            param=[]
 
         if self.left:
             if isinstance(self.left[1],HuffmanNode):
-                self.left[1].preorder(path+[-1],collector)
+                self.left[1].preorder(polarity+[-1],param+[self.index],collector)
             else:
-                collector.append((self.left[1],self.left[0],path+[-1]))
+                #collector.append((self.left[1],self.left[0],path+[-1]))
+                collector.append((self.left[1],param+[self.index], polarity + [-1]))
         if self.right:
             if isinstance(self.right[1],HuffmanNode):
-                self.right[1].preorder(path+[1],collector)
+                self.right[1].preorder(polarity+[1],param+[self.index],collector)
             else:
-                collector.append((self.right[1],self.right[0],path+[1]))
+                #collector.append((self.right[1],self.right[0],path+[1]))
+                collector.append((self.right[1],param+[self.index], polarity + [1]))
         return collector
 
-def pad_bitstr(bitstr):
-    """
-    :param bitstr:
-    :type bitstr: list
-    :return: padded list of bits
-    """
-    max_bit_len = 0
-    for bits in bitstr:
-        if len(bits) > max_bit_len:
-            max_bit_len = len(bits)
-    for bits in bitstr:
-        bits.extend([0] * (max_bit_len-len(bits)))
 
-    return bitstr
-
-
-def pad_virtual_class(clses, pad_value):
-    max_cls_len = 0
-    for nodes in clses:
-        if len(nodes) > max_cls_len:
-            max_cls_len = len(nodes)
-    for nodes in clses:
-        nodes.extend([pad_value] * (max_cls_len-len(nodes)))
-
-    return clses
-
-def build_huffman_tree(frequenties):
+def build_huffman(frequenties):
     Q=Queue.PriorityQueue()
-    for v in frequenties:
+    for v in frequenties:  #((freq,word),index)
         Q.put(v)
+    idx=0
     while Q.qsize()>1:
         l,r=Q.get(),Q.get()
-        node=HuffmanNode(l,r)
-        Q.put((l[0]+r[0],node))
-    return Q.get()
+        node=HuffmanNode(l,r,idx)
+        idx+=1
+        freq=l[0]+r[0]
+        Q.put((freq,node))
+    return Q.get()[1]
 
-def prefix_generator(s, start=0, end=None):
-    if end is None:
-        end = len(s) + 1
-    for idx in range(start, end):
-        yield s[:idx]
 
-def load_huffman_tree(rel_freq,meta_file=None):
-
-    #with file(meta_file, 'rb') as f:
-    #    meta = pickle.load(f)
-    #    rel_freq = meta['rel_freq']
+def load_prefix(rel_freq,meta_file=None):
     freq = zip(rel_freq, range(len(rel_freq)))
-    tree = build_huffman_tree(freq)[1]
+    tree = build_huffman(freq)
     x = tree.preorder()
-    y = sorted(x, key=lambda z: z[1], reverse=True)
-    bitstr = []
-    for _, _, bitstr in y:
-        bitstr.append(bitstr[:-1])
-
-    z=[]
-    for wordindex,_,bits in y:
-        z.append((wordindex,bits,list(prefix_generator(bits,end=len(bits)))))
-
-    clses = set()
-    for _, _, ele in z:
-        for i in ele:
-            clses.add(''.join('%+d' % j for j in i))
-    idx2clses = sorted(clses, key=lambda ele: len(ele))
-    cls2idx = dict(((cls, idx) for idx, cls in enumerate(idx2clses)))
-    w = map(lambda x: (x[0], x[1], [cls2idx[''.join('%+d' % j for j in p)] for p in x[2]]), z)
-
-    tmp1, tmp2 = [], []
-    for _, bits, cls_idx in w:
-        tmp1.append(bits)
-        tmp2.append(cls_idx)
-    pad_bitstr(tmp1)
-    pad_virtual_class(tmp2, pad_value=len(idx2clses))
-    assert len(freq) == len(w)
-    idx2cls = [None] * len(freq)
-    idx2bitstr = [None] * len(freq)
-    for idx, bitstr_, cls_ in w:
-        idx2cls[idx] = cls_
-        idx2bitstr[idx] = bitstr_
-
-    idx2cls = np.array(idx2cls, dtype='int32')
-    idx2bitstr = np.array(idx2bitstr, dtype='int8')
-
-    return idx2cls, idx2bitstr, idx2bitstr != 0
-
+    x = sorted(x, key=lambda z: z[0])
 
 
 if __name__ == '__main__':
-    freq = [
-        (8.167, 'a'), (1.492, 'b'), (2.782, 'c'), (4.253, 'd'),
-        (12.702, 'e'),(2.228, 'f'), (2.015, 'g'), (6.094, 'h'),
-        (6.966, 'i'), (0.153, 'j'), (0.747, 'k'), (4.025, 'l'),
-        (2.406, 'm'), (6.749, 'n'), (7.507, 'o'), (1.929, 'p'),
-        (0.095, 'q'), (5.987, 'r'), (6.327, 's'), (9.056, 't'),
-        (2.758, 'u'), (1.037, 'v'), (2.365, 'w'), (0.150, 'x'),
-        (1.974, 'y'), (0.074, 'z')]
+
+    freq = [8.167, 1.492, 2.782, 4.253, 12.702, 2.228, 2.015, 6.094, 6.966, 0.153, 0.747, 4.025, 2.406, 6.749, 7.507,
+            1.929, 0.095, 5.987, 6.327, 9.056, 2.758, 1.037, 2.365, 0.150, 1.974, 0.074]
     load_huffman_tree(freq)
 
 
@@ -175,7 +94,6 @@ def prefix_generator(s, start=0, end=None):
         end = len(s) + 1
     for idx in range(start, end):
         yield s[:idx]
-
 
 class H_Softmax(object):
 
@@ -351,3 +269,46 @@ class H_Softmax(object):
                 route.append((n_parent,parent_choice))
             parent=parent.parent
         return route
+def build_binary_tree(frequenties):
+    Q=Queue.PriorityQueue()
+
+    # fqs: frequenties, widx: word index
+    for fqs,widx in frequenties:
+        Q.put(TNode(index=widx,freq=fqs))
+    count=0
+    while Q.qsize() > 1:
+        l,r=Q.get(),Q.get()
+        node=TNode(index=count,left=l,right=r,freq=l.freq+r.freq)
+        count+=1
+        l.parent=node
+        l.parent_choice=-1
+        r.parent=node
+        r.parent_choice=1
+        Q.put(node)
+    return Q.get()
+    '''
+        pairs=[]
+        if len(current_layer) > 1:
+            while(len(current_layer)>1):
+                pairs.append(current_layer[:2])
+                current_layer=current_layer[2:]
+        else:
+            pairs=[current_layer]
+            current_layer=[]
+        new_layer=[]
+        for p in pairs:
+            node=TreeNode(index=count,left=p[0],right=p[1])
+            count+=1
+            p[0].parent=node
+            p[0].parent_choice=-1
+            p[1].parent=node
+            p[1].parent_choice=1
+            new_layer.append(node)
+        if len(current_layer)>0:
+            new_layer.extend(current_layer)
+            current_layer=[]
+        layers.append(new_layer)
+        current_layer=new_layer
+
+    return layers
+    '''
