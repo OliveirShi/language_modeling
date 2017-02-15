@@ -8,10 +8,15 @@
 
 -  noise contrastive estimation for RNNLM
 
-## cnn_highway
+## Blackout
 
--  cnn layer+ highway layer for RNNLM
+- Blackout approximation algorithm for RNNLM 
 
-## cnn_lstm
+## p-tHSM
 
--  cnn_layer + lstm layer for rnnlm
+- paralized tree-based hierarchical softmax model
+
+## tHSM
+
+- tree-based hierarchical softmax model with huffman coding
+
