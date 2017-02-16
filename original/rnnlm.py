@@ -4,7 +4,6 @@ if theano.config.device=='cpu':
     from theano.tensor.shared_randomstreams import RandomStreams
 elif theano.config.device=='gpu':
     from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
-
 from softmax import softmax
 from gru import GRU
 from lstm import LSTM
@@ -65,9 +64,12 @@ class RNNLM:
                                      updates=updates,
                                      givens={self.is_train: np.cast['int32'](1)})
 
-        self.predict = theano.function(inputs=[self.x, self.x_mask, self.n_batch],
-                                       outputs=output_layer.predict,
-                                       givens={self.is_train: np.cast['int32'](0)})
+        self.predict=theano.function(inputs=[self.x,self.x_mask,self.n_batch],
+                                     outputs=output_layer.predict,
+                                     givens={self.is_train:np.cast['int32'](1)})
+        self.test = theano.function(inputs=[self.x, self.x_mask,self.y,self.y_mask, self.n_batch],
+                                       outputs=cost,
+                                       givens={self.is_train: np.cast['int32'](1)})
 
     def categorical_crossentropy(self, y_pred, y_true):
         y_pred = T.clip(y_pred, self.epsilon, 1.0 - self.epsilon)

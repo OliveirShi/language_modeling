@@ -5,33 +5,34 @@ from utils import TextIterator,save_model
 
 import logging
 from argparse import ArgumentParser 
+import sys
 
 lr=0.5
-p=0
-n_batch=2
+p=0.1
+n_batch=10
 NEPOCH=200
 
-n_input=200
-n_hidden=300
+n_input=256
+n_hidden=256
 cell='gru'
 optimizer='sgd'
 
-p = ArgumentParser(usage='it is usage tip', description='no')  
-p.add_argument('--train_file', default='../data/ptb/idx_ptb.train.txt', type=str, help='train dir')  
-p.add_argument('--valid_file', default='../data/ptb/idx_ptb.valid.txt', type=str, help='valid dir')
-p.add_argument('--test_file', default='../data/ptb/idx_ptb.test.txt', type=str, help='test dir')
-p.add_argument('--vocab_size', default=10001, type=int, help='vocab size')
+argument = ArgumentParser(usage='it is usage tip', description='no')  
+argument.add_argument('--train_file', default='../data/ptb/idx_ptb.train.txt', type=str, help='train dir')  
+argument.add_argument('--valid_file', default='../data/ptb/idx_ptb.valid.txt', type=str, help='valid dir')
+argument.add_argument('--test_file', default='../data/ptb/idx_ptb.test.txt', type=str, help='test dir')
+argument.add_argument('--vocab_size', default=10001, type=int, help='vocab size')
 
-args = p.parse_args()  
+args = argument.parse_args()  
 
 
 train_datafile=str(args.train_file)
 valid_datafile=str(args.valid_file)
 test_datafile=str(args.test_file)
 n_words_source=-1
-vocabulary_size=int(args.vocab_size)
+vocabulary_size=33279#int(args.vocab_size)
 disp_freq=20
-test_freq=200
+valid_freq=20000
 save_freq=20000
 clip_freq=2000
 pred_freq=200
@@ -48,7 +49,7 @@ def train(lr):
     # Load data
     print 'loading dataset...'
     train_data=TextIterator(train_datafile,n_words_source=n_words_source,n_batch=n_batch)
-    test_data=TextIterator(test_datafile,n_words_source=n_words_source,n_batch=n_batch)
+    valid_data=TextIterator(valid_datafile,n_words_source=n_words_source,n_batch=n_batch)
 
     print 'building model...'
     model=RNNLM(n_input,n_hidden,vocabulary_size,cell,optimizer,p)
@@ -72,9 +73,9 @@ def train(lr):
             if idx%save_freq==0:
                 print 'dumping...'
                 save_model('./model/parameters_%.2f.pkl'%(time.time()-start),model)
-            if idx % test_freq==0:
+            if idx % valid_freq==0:
                 print 'testing....'
-                test_cost=evaluate(test_data,model)
+                test_cost=evaluate(valid_data,model)
                 print 'test_cost:',test_cost,'perplexity:',np.exp(test_cost)
             if idx % pred_freq==0:
                 print 'predicting...'
