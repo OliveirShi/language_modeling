@@ -1,5 +1,6 @@
 import time
-
+import cPickle as pickle
+from os.path import isfile
 from rnnlm import *
 from utils import TextIterator,save_model
 
@@ -16,6 +17,7 @@ optimizer='sgd'
 train_datafile='../ptb/idx_ptb.train.txt'
 valid_datafile='../ptb/idx_ptb.valid.txt'
 test_datafile='../ptb/idx_ptb.test.txt'
+freq_datafile='../ptb/frequenties.pkl'
 n_words_source=-1
 vocabulary_size=10001
 
@@ -23,11 +25,14 @@ disp_freq=100
 sample_freq=200
 save_freq=5000
 
+
+
 def train():
     # Load data
     print 'loading dataset...'
-    train_data=TextIterator(train_datafile,n_words_source=n_words_source,n_batch=n_batch,maxlen=maxlen)
-    test_data=TextIterator(test_datafile,n_words_source=n_words_source,n_batch=n_batch,maxlen=maxlen)
+    train_data=TextIterator(train_datafile,freq_datafile,n_words_source=n_words_source,n_batch=n_batch,maxlen=maxlen)
+    test_data=TextIterator(test_datafile,freq_datafile,n_words_source=n_words_source,n_batch=n_batch,maxlen=maxlen)
+
 
     print 'building model...'
     model=RNNLM(n_input,n_hidden,vocabulary_size,cell,optimizer,p)
@@ -36,7 +41,6 @@ def train():
     for epoch in xrange(NEPOCH):
         error=0
         idx=0
-        in_start=time.time()
         for x,x_mask,y,y_mask in train_data:
             idx+=1
             cost=model.train(x,x_mask,y,y_mask,n_batch,lr)

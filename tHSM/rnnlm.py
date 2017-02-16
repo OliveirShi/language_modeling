@@ -5,8 +5,8 @@ from gru import GRU
 from lstm import LSTM
 from updates import *
 
-class RNNLM:
-    def __init__(self,n_input,n_hidden,n_output,cell='gru',optimizer='sgd',p=0.5):
+class RNNLM(object):
+    def __init__(self,n_input,n_hidden,n_output,cell='gru',optimizer='sgd',p=0.5,frequenties=None):
         self.x=T.imatrix('batched_sequence_x')  # n_batch, maxlen
         self.x_mask=T.matrix('x_mask')
         self.y=T.imatrix('batched_sequence_y')
@@ -29,9 +29,9 @@ class RNNLM:
 
         self.epsilon=1.0e-15
         self.rng=RandomStreams(1234)
-        self.build()
+        self.build(frequenties)
 
-    def build(self):
+    def build(self,frequenties):
         print '\t building rnn cell...'
         if self.cell=='gru':
             hidden_layer=GRU(self.rng,
@@ -45,7 +45,7 @@ class RNNLM:
                               self.is_train,self.p)
         print '\t building softmax output layer...'
         softmax_shape=(self.n_hidden,self.n_output)
-        output_layer=H_Softmax(softmax_shape,hidden_layer.activation,self.y,self.y_mask)
+        output_layer=H_Softmax(softmax_shape,hidden_layer.activation,self.y,self.y_mask,frequenties)
         self.params=[self.E,]
         self.params+=hidden_layer.params
         self.params+=output_layer.params

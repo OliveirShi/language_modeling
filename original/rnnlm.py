@@ -1,4 +1,9 @@
-from theano.tensor.shared_randomstreams import RandomStreams
+
+import theano
+if theano.config.device=='cpu':
+    from theano.tensor.shared_randomstreams import RandomStreams
+elif theano.config.device=='gpu':
+    from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 
 from softmax import softmax
 from gru import GRU
