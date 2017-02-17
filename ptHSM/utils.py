@@ -14,7 +14,7 @@ def load_model(f,model):
     return model
 
 class TextIterator:
-    def __init__(self,source,n_batch,maxlen,n_words_source=-1):
+    def __init__(self,source,n_batch,maxlen=None,n_words_source=-1):
 
         self.source=open(source,'r')
 
@@ -45,7 +45,7 @@ class TextIterator:
                 if self.n_words_source>0:
                     s=[int(w) if int(w) <self.n_words_source else 3 for w in s]
                 # filter long sentences
-                if len(s)>self.maxlen:
+                if self.maxlen and len(s)>self.maxlen:
                     continue
                 source.append(s)
                 if len(source)>=self.n_batch:

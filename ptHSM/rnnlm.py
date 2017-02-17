@@ -5,7 +5,7 @@ from gru import GRU
 from lstm import LSTM
 from updates import *
 
-class RNNLM:
+class RNNLM(object):
     def __init__(self,n_input,n_hidden,n_output,cell='gru',optimizer='sgd',p=0.5):
         self.x=T.imatrix('batched_sequence_x')  # n_batch, maxlen
         self.x_mask=T.matrix('x_mask')

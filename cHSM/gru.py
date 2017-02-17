@@ -2,7 +2,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-class GRU:
+class GRU(object):
     def __init__(self,rng,
                  n_input,n_hidden,n_batch,
                  x,E,mask,
@@ -95,6 +95,3 @@ class GRU:
             self.activation=T.switch(T.eq(self.is_train,1),h*drop_mask,h*(1-self.p))
         else:
             self.activation=T.switch(T.eq(self.is_train,1),h,h)
-            
-                
-        

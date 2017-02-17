@@ -1,4 +1,8 @@
-from theano.tensor.shared_randomstreams import RandomStreams
+import theano
+if theano.config.device=='cpu':
+    from theano.tensor.shared_randomstreams import RandomStreams
+elif theano.config.device=='gpu':
+    from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 
 
 from gru import GRU
@@ -6,12 +10,12 @@ from lstm import LSTM
 from level_softmax import level_softmax
 from updates import *
 
-class RNNLM:
+class RNNLM(object):
     def __init__(self,n_input,n_hidden,n_output,cell='gru',optimizer='sgd',p=0.5):
         self.x=T.imatrix('batched_sequence_x')  # n_batch, maxlen
-        self.x_mask=T.matrix('x_mask')
+        self.x_mask=T.fmatrix('x_mask')
         self.y=T.imatrix('batched_sequence_y')
-        self.y_mask=T.matrix('y_mask')
+        self.y_mask=T.fmatrix('y_mask')
         
         self.n_input=n_input
         self.n_hidden=n_hidden
@@ -56,7 +60,7 @@ class RNNLM:
         updates=sgd(self.params,gparams,lr)
 
         self.train=theano.function(inputs=[self.x,self.x_mask,self.y,self.y_mask,self.n_batch,lr],
-                                   outputs=cost,
+                                   outputs=[cost,hidden_layer.activation],
                                    updates=updates,
                                    givens={self.is_train:np.cast['int32'](1)})
 

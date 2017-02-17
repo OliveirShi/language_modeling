@@ -10,7 +10,7 @@ from lstm import LSTM
 from updates import *
 
 
-class RNNLM:
+class RNNLM(object):
     def __init__(self, n_input, n_hidden, n_output, cell='gru', optimizer='sgd', p=0.5):
         self.x = T.imatrix('batched_sequence_x')  # n_batch, maxlen
         self.x_mask = T.matrix('x_mask')
@@ -60,7 +60,7 @@ class RNNLM:
         updates = sgd(self.params, gparams, lr)
 
         self.train = theano.function(inputs=[self.x, self.x_mask, self.y, self.y_mask, self.n_batch, lr],
-                                     outputs=cost,
+                                     outputs=[cost,hidden_layer.activation],
                                      updates=updates,
                                      givens={self.is_train: np.cast['int32'](1)})
 

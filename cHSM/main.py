@@ -3,64 +3,94 @@ import time
 from rnnlm import *
 from utils import TextIterator,save_model
 
-lr=0.01
-p=0.5
-n_batch=100
-NEPOCH=100
+import logging
+from argparse import ArgumentParser 
+import sys
 
-n_input=100
-n_hidden=250
-maxlen=100
+lr=0.5
+p=0.1
+NEPOCH=200
+
+n_input=256
+n_hidden=256
 cell='gru'
 optimizer='sgd'
-train_datafile='../ptb/idx_ptb.train.txt'
-valid_datafile='../ptb/idx_ptb.valid.txt'
-test_datafile='../ptb/idx_ptb.test.txt'
+
+argument = ArgumentParser(usage='it is usage tip', description='no')  
+argument.add_argument('--train_file', default='../data/ptb/idx_ptb.train.txt', type=str, help='train dir')  
+argument.add_argument('--valid_file', default='../data/ptb/idx_ptb.valid.txt', type=str, help='valid dir')
+argument.add_argument('--test_file', default='../data/ptb/idx_ptb.test.txt', type=str, help='test dir')
+argument.add_argument('--vocab_size', default=10002, type=int, help='vocab size')
+argument.add_argument('--batch_size', default=10, type=int, help='batch size')
+
+args = argument.parse_args()  
+
+
+train_datafile=args.train_file
+valid_datafile=args.valid_file
+test_datafile=args.test_file
+vocabulary_size=args.vocab_size
+n_batch=args.batch_size
 n_words_source=-1
-vocabulary_size=10001
 
-disp_freq=100
-sample_freq=200
-save_freq=5000
+disp_freq=200
+valid_freq=20000
+save_freq=20000
+clip_freq=2000
+pred_freq=2000
 
-def train():
+def evaluate(test_data,model):
+    cost=0
+    index=0
+    for x,x_mask,y,y_mask in test_data:
+        index+=1
+        cost+=model.test(x,x_mask,y,y_mask,x.shape[1])
+    return cost/index
+
+def train(lr):
     # Load data
     print 'loading dataset...'
-    train_data=TextIterator(train_datafile,n_words_source=n_words_source,n_batch=n_batch,maxlen=maxlen)
-    test_data=TextIterator(test_datafile,n_words_source=n_words_source,n_batch=n_batch,maxlen=maxlen)
+    train_data=TextIterator(train_datafile,n_words_source=n_words_source,n_batch=n_batch)
+    valid_data=TextIterator(valid_datafile,n_words_source=n_words_source,n_batch=n_batch)
+    test_data = TextIterator(test_datafile, n_words_source=n_words_source, n_batch=n_batch)
 
     print 'building model...'
     model=RNNLM(n_input,n_hidden,vocabulary_size,cell,optimizer,p)
     print 'training start...'
     start=time.time()
+    idx=0
     for epoch in xrange(NEPOCH):
         error=0
-        idx=0
-        in_start=time.time()
         for x,x_mask,y,y_mask in train_data:
-            if x.shape[1]!=n_batch:
-                continue
             idx+=1
-            beg_time=time.time()
-            cost=model.train(x,x_mask,y,y_mask,n_batch,lr)
-            print 'index:',idx,'time:',time.time()-beg_time,'cost:',cost
+            cost,chsm=model.train(x,x_mask,y,y_mask,x.shape[1],lr)
             error+=np.sum(cost)
+            print chsm[0][0]
+            print y.shape,y_mask.shape,cost
             if np.isnan(cost) or np.isinf(cost):
                 print 'NaN Or Inf detected!'
                 return -1
             if idx % disp_freq==0:
-                print 'epoch:',epoch,'idx:',idx,'cost:',error/disp_freq
+                print 'epoch:',epoch,'idx:',idx,'cost:',error/disp_freq,'base exp:',np.exp(error/disp_freq),'lr:',lr
                 error=0
             if idx%save_freq==0:
                 print 'dumping...'
-                save_model('model/parameters_%.2f.pkl'%(time.time()-start),model)
-            if idx % sample_freq==0:
-                print 'Sampling....'
-                y_pred=model.predict(x,x_mask,n_batch)
-                print y_pred
+                save_model('./model/parameters_%.2f.pkl'%(time.time()-start),model)
+            if idx % valid_freq==0:
+                print 'testing....'
+                test_cost=evaluate(valid_data,model)
+                print 'test_cost:',test_cost,'perplexity:',np.exp(test_cost)
+            if idx % pred_freq==0:
+                print 'predicting...'
+                prediction=model.predict(x,x_mask,x.shape[1])
+                print prediction[:100]
+            if idx%clip_freq==0 and lr >=1e-3:
+                print 'cliping learning rate:',
+                lr=lr*0.7
+                print lr
 
     print "Finished. Time = "+str(time.time()-start)
 
 
 if __name__ == '__main__':
-    train()
+    train(lr=lr)

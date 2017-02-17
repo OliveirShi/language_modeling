@@ -4,30 +4,26 @@ import theano.tensor as T
 import logging
 from theano.tensor.nnet import h_softmax
 
-class level_softmax:
+class level_softmax(object):
     def __init__(self,n_input,n_output,x,y):
-        self.n_input=n_input
-        self.n_output=n_output
-
-        self.level1_size=np.ceil(np.sqrt(n_output)).astype('int32')
-        self.level2_size=np.ceil(n_output/(self.level1_size-1)).astype('int32')
-        print("  level1_size=%d level2_size=%d",self.level1_size,self.level2_size)
-        assert self.level1_size*self.level2_size>=n_output
+        level1_size=np.ceil(np.sqrt(n_output)).astype('int32')
+        level2_size=np.ceil(n_output/(level1_size-1)).astype('int32')
+        print "level1_size=%d, level2_size=%d"% (level1_size,level2_size)
+        assert level1_size*level2_size>=n_output
 
         self.logitx_shape=x.shape
-        self.logity_shape=y.shape
-        self.x=x.reshape([self.logitx_shape[0]*self.logitx_shape[1],self.logitx_shape[2]])
-        self.y=y.reshape([self.logity_shape[0],self.logity_shape[1]])
+
+        x=x.reshape((self.logitx_shape[0]*self.logitx_shape[1],-1))
 
         init_W1=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
-                                             size=(n_input,self.level1_size)),dtype=theano.config.floatX)
-        init_b1=np.zeros((self.level1_size),dtype=theano.config.floatX)
+                                             size=(n_input,level1_size)),dtype=theano.config.floatX)
+        init_b1=np.zeros((level1_size),dtype=theano.config.floatX)
 
         init_W2=np.asarray(np.random.uniform(low=-np.sqrt(1./n_input),
                                              high=np.sqrt(1./n_input),
-                                             size=(self.level1_size,n_input,self.level2_size)),dtype=theano.config.floatX)
-        init_b2=np.zeros((self.level1_size,self.level2_size),dtype=theano.config.floatX)
+                                             size=(level1_size,n_input,level2_size)),dtype=theano.config.floatX)
+        init_b2=np.zeros((level1_size,level2_size),dtype=theano.config.floatX)
 
         self.W1=theano.shared(value=init_W1,name='output_W1')
         self.b1=theano.shared(value=init_b1,name='output_b1')
@@ -36,24 +32,15 @@ class level_softmax:
 
         self.params=[self.W1,self.b1,self.W2,self.b2]
 
-        self.build()
 
-    def build(self):
-        '''
-        the input is always 3-dimensional:
-            the first dimension is the sequences,
-            the second dimension are n_batch,
-            the third dimension is n_hidden.
-        :return:
-        '''
-        self.activation = h_softmax(self.x,
-                                    self.x.shape[0], self.n_output,
-                                    self.level1_size,self.level2_size,
+        self.activation = h_softmax(x,
+                                    x.shape[0], n_output,
+                                    level1_size,level2_size,
                                     self.W1, self.b1, self.W2, self.b2,
-                                    self.y)
+                                    y)
 
-        predicted=h_softmax(self.x, self.x.shape[0], self.x.shape[1], self.level1_size,
-                         self.level2_size, self.W1, self.b1, self.W2, self.b2)
+        predicted=h_softmax(x, x.shape[0], x.shape[1], level1_size,
+                         level2_size, self.W1, self.b1, self.W2, self.b2)
         self.prediction=T.argmax(predicted,axis=1)
 
 

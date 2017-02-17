@@ -1,20 +1,18 @@
 import time
+from argparse import ArgumentParser
 
-from rnnlm import *
 from utils import TextIterator,save_model
+from rnnlm import *
 
-import logging
-from argparse import ArgumentParser 
-import sys
+__author__ = 'Nan Jiang (nanjiang@buaa.edu.cn)'
 
 lr=0.5
 p=0.1
-n_batch=10
 NEPOCH=200
 
 n_input=256
 n_hidden=256
-cell='gru'
+cell='lstm'
 optimizer='sgd'
 
 argument = ArgumentParser(usage='it is usage tip', description='no')  
@@ -22,20 +20,23 @@ argument.add_argument('--train_file', default='../data/ptb/idx_ptb.train.txt', t
 argument.add_argument('--valid_file', default='../data/ptb/idx_ptb.valid.txt', type=str, help='valid dir')
 argument.add_argument('--test_file', default='../data/ptb/idx_ptb.test.txt', type=str, help='test dir')
 argument.add_argument('--vocab_size', default=10001, type=int, help='vocab size')
+argument.add_argument('--batch_size', default=10, type=int, help='batch size')
+
 
 args = argument.parse_args()  
 
 
-train_datafile=str(args.train_file)
-valid_datafile=str(args.valid_file)
-test_datafile=str(args.test_file)
+train_datafile=args.train_file
+valid_datafile=args.valid_file
+test_datafile=args.test_file
+n_batch=args.batch_size
+vocabulary_size=args.vocab_size
 n_words_source=-1
-vocabulary_size=33279#int(args.vocab_size)
-disp_freq=20
-valid_freq=20000
+disp_freq=1
+valid_freq=1000
 save_freq=20000
 clip_freq=2000
-pred_freq=200
+pred_freq=20000
 
 def evaluate(test_data,model):
     cost=0
@@ -62,7 +63,8 @@ def train(lr):
         for x,x_mask,y,y_mask in train_data:
             idx+=1
             beg_time=time.time()
-            cost=model.train(x,x_mask,y,y_mask,x.shape[1],lr)
+            cost,hidden=model.train(x,x_mask,y,y_mask,x.shape[1],lr)
+            print hidden[0][0]
             error+=np.sum(cost)
             if np.isnan(cost) or np.isinf(cost):
                 print 'NaN Or Inf detected!'
