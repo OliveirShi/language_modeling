@@ -2,3 +2,6 @@
 *.xml
 *.iml
 __init__.py
+
+*.pyc
+cHSM/rnnlm.pyc

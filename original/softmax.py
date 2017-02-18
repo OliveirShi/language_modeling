@@ -2,7 +2,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-class softmax:
+class softmax(object):
     def __init__(self,n_input,n_output,x):
         self.n_input=n_input
         self.n_output=n_output

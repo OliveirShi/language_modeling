@@ -7,6 +7,8 @@ elif theano.config.device=='gpu':
 
 from gru import GRU
 from lstm import LSTM
+
+
 from level_softmax import level_softmax
 from updates import *
 
@@ -20,11 +22,11 @@ class RNNLM(object):
         self.n_input=n_input
         self.n_hidden=n_hidden
         self.n_output=n_output
-        init_Embd=np.asarray(np.random.uniform(low=-np.sqrt(1./n_output),
-                                               high=np.sqrt(1./n_output),
+        init_Embd=np.asarray(np.random.uniform(low=-np.sqrt(6./(n_output+n_input)),
+                                               high=np.sqrt(6./(n_output+n_input)),
                                                size=(n_output,n_input)),
                            dtype=theano.config.floatX)
-        self.E=theano.shared(value=init_Embd,name='word_embedding')
+        self.E=theano.shared(value=init_Embd,name='word_embedding',borrow=True)
 
         self.cell=cell
         self.optimizer=optimizer
@@ -37,7 +39,7 @@ class RNNLM(object):
         self.build()
 
     def build(self):
-        print '     building rnn cell...'
+        print 'building rnn cell...'
         if self.cell=='gru':
             hidden_layer=GRU(self.rng,
                              self.n_input,self.n_hidden,self.n_batch,
@@ -48,27 +50,36 @@ class RNNLM(object):
                               self.n_input,self.n_hidden,self.n_batch,
                               self.x,self.E,self.x_mask,
                               self.is_train,self.p)
-        print '  building softmax output layer...'
+        print 'building softmax output layer...'
         output_layer=level_softmax(self.n_hidden,self.n_output,hidden_layer.activation,self.y)
+        cost = self.categorical_crossentropy(output_layer.activation)
+
         self.params=[self.E,]
         self.params+=hidden_layer.params
         self.params+=output_layer.params
 
-        cost=self.categorical_crossentropy(output_layer.activation)
+
         lr=T.scalar("lr")
         gparams=[T.clip(T.grad(cost,p),-10,10) for p in self.params]
         updates=sgd(self.params,gparams,lr)
 
         self.train=theano.function(inputs=[self.x,self.x_mask,self.y,self.y_mask,self.n_batch,lr],
-                                   outputs=[cost,hidden_layer.activation],
+                                   outputs=cost,
                                    updates=updates,
                                    givens={self.is_train:np.cast['int32'](1)})
 
         self.predict=theano.function(inputs=[self.x,self.x_mask,self.n_batch],
-                                     outputs=output_layer.prediction,
+                                     outputs=output_layer.predicted,
                                      givens={self.is_train:np.cast['int32'](0)})
+        self.test = theano.function(inputs=[self.x, self.x_mask, self.y, self.y_mask, self.n_batch],
+                                    outputs=cost,
+                                    givens={self.is_train: np.cast['int32'](0)})
 
 
     def categorical_crossentropy(self,y_pred):
-        return T.sum(y_pred*self.y_mask.flatten())/T.sum(self.y_mask)
+        return -T.sum(T.log(y_pred)*self.y_mask.flatten())/T.sum(self.y_mask)
+
+    def categorical_crossentropy2(self, y_pred, y_true=None):
+        nll = T.nnet.categorical_crossentropy(y_pred, y_true.flatten())
+        return T.sum(nll * self.y_mask.flatten()) / T.sum(self.y_mask)
     

@@ -26,7 +26,7 @@ class GRU(object):
                                              high=np.sqrt(1./n_input),
                                              size=(n_input+n_hidden,n_hidden)),
                            dtype=theano.config.floatX)
-        init_bz=np.zeros((n_hidden),dtype=theano.config.floatX)
+        init_bz=np.zeros((n_hidden,),dtype=theano.config.floatX)
 
         self.Wz=theano.shared(value=init_Wz,name='Wz')
         self.bz=theano.shared(value=init_bz,name='bz')
@@ -36,7 +36,7 @@ class GRU(object):
                                              high=np.sqrt(1./n_input),
                                              size=(n_input+n_hidden,n_hidden)),
                            dtype=theano.config.floatX)
-        init_br=np.zeros((n_hidden),dtype=theano.config.floatX)
+        init_br=np.zeros((n_hidden,),dtype=theano.config.floatX)
 
         self.Wr=theano.shared(value=init_Wr,name='Wr')
         self.br=theano.shared(value=init_br,name='br')
@@ -50,7 +50,7 @@ class GRU(object):
                                               high=np.sqrt(1./n_input),
                                               size=(n_hidden,n_hidden)),
                             dtype=theano.config.floatX)
-        init_bc=np.zeros((n_hidden),dtype=theano.config.floatX)
+        init_bc=np.zeros((n_hidden,),dtype=theano.config.floatX)
 
         self.Wxc=theano.shared(value=init_Wxc,name='Wxc')
         self.Whc=theano.shared(value=init_Whc,name='Whx')
@@ -88,10 +88,12 @@ class GRU(object):
                         sequences=[self.x,self.mask],
                         outputs_info=state_pre,
                         truncate_gradient=-1)
-
+        self.activation=h
+        '''
         # Dropout
         if self.p>0:
             drop_mask=self.rng.binomial(n=1,p=1-self.p,size=h.shape,dtype=theano.config.floatX)
             self.activation=T.switch(T.eq(self.is_train,1),h*drop_mask,h*(1-self.p))
         else:
             self.activation=T.switch(T.eq(self.is_train,1),h,h)
+        '''
