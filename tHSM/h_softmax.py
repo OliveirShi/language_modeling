@@ -24,35 +24,35 @@ class Softmaxlayer(object):
 
 class H_Softmax(object):
 
-    def __init__(self,shape,x,y,maskY):
+    def __init__(self,shape,x,y_node,y_choice,y_bit_mask,maskY):
         self.prefix='h_softmax_'
 
         self.in_size,self.out_size=shape
         # in_size:size,mb_size=out_size
         self.x=x
-        self.y=y
+        self.y_node=y_node
+        self.y_choice=y_choice
+        self.y_bit_mask=y_bit_mask
         self.maskY=maskY
         self.rng=np.random.RandomState(12345)
         wp_val = np.asarray(self.rng.uniform(low=-np.sqrt(6. / (self.in_size)),
                                              high=np.sqrt(6. / (self.in_size + 2)),
-                                             size=(len(nodes), self.in_size)), dtype=theano.config.floatX)
+                                             size=(self.out_size, self.in_size)), dtype=theano.config.floatX)
         self.wp_matrix = theano.shared(value=wp_val, name="V_soft", borrow=True)
 
         self.params = [self.wp_matrix, ]
         self.build_graph()
-        self.build_predict()
+        #self.build_predict()
 
 
 
     def build_graph(self):
-        nodes=self.y['node']
-        choices=self.y['choice']
-        wp=self.wp_matrix[nodes]
+        wp=self.wp_matrix[self.y_node]
         # feature.dimshuffle(0,1,'x',2)
         node=T.sum(wp * self.x.dimshuffle(0,1,'x',2),axis=-1)
 
         #log_sigmoid=-T.mean(T.log(T.nnet.sigmoid(node*choices))*mask,axis=-1)
-        log_sigmoid=T.mean(T.log(1+T.exp(-node*choices)),axis=-1)
+        log_sigmoid=T.mean(T.log(1+T.exp(-node*self.y_choice))*self.y_bit_mask,axis=-1)
 
         cost=log_sigmoid*self.maskY   # matrix element-wise dot
         self.activation=cost.sum()/self.maskY.sum()

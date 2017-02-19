@@ -15,10 +15,10 @@ def load_model(f,model):
     return model
 
 class TextIterator:
-    def __init__(self,source,freqs,n_batch,maxlen,n_words_source=-1):
+    def __init__(self,source,freqs,n_batch,maxlen=None ,n_words_source=-1):
 
         self.source=open(source,'r')
-        self.nodes,self.choices=load_prefix(freqs)
+        self.nodes,self.choices,self.bitmasks=load_prefix(freqs)
 
 
         self.n_batch=n_batch
@@ -26,6 +26,8 @@ class TextIterator:
         self.n_words_source=n_words_source
         self.end_of_data=False
 
+    def reconstruct(self,y):
+        return self.nodes[y],self.choices[y],self.bitmasks[y]
 
 
     def __iter__(self):
@@ -50,7 +52,7 @@ class TextIterator:
                 if self.n_words_source>0:
                     s=[int(w) if int(w) <self.n_words_source else 3 for w in s]
                 # filter long sentences
-                if len(s)>self.maxlen:
+                if self.maxlen and len(s)>self.maxlen:
                     continue
                 source.append(s)
                 if len(source)>=self.n_batch:
@@ -62,7 +64,8 @@ class TextIterator:
             self.end_of_data=False
             self.reset()
             raise StopIteration
-        return prepare_data(source)
+        x, x_mask,y, y_mask=prepare_data(source)
+        return x,x_mask,self.reconstruct(y),y_mask
 
 def prepare_data(seqs_x):
     lengths_x=[len(s)-1 for s in seqs_x]
@@ -80,7 +83,7 @@ def prepare_data(seqs_x):
         x_mask[:lengths_x[idx],idx]=1
         y_mask[:lengths_x[idx],idx]=1
 
-    return x,x_mask,y,y_mask,self.choices[]
+    return x,x_mask,y,y_mask
 
 
 
@@ -139,12 +142,18 @@ def load_prefix(freq_file):
     tree = build_huffman(freq)
     x = tree.preorder()
     x=sorted(x, key=lambda z: z[0])
-    nodes=[]
-    choices=[]
+
+    length_x=[len(it[1]) for it in x]
+    vocab_size=len(x)
+    maxlen=np.max(length_x)
+    nodes=np.zeros((vocab_size,maxlen),dtype='int32')
+    choices=np.zeros((vocab_size,maxlen),dtype='int32')
+    bit_masks=np.zeros((vocab_size,maxlen),dtype='float32')
     for idx,node,choice in x:
-        nodes.append(np.asarray(node))
-        choices.append(np.asarray(choice))
-    return nodes,choices
+        nodes[idx,:length_x[idx]]=node
+        choices[idx,:length_x[idx]]=choice
+        bit_masks[idx,:length_x[idx]]=1
+    return nodes,choices,bit_masks
 
 
 
