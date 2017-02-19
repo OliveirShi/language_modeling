@@ -7,7 +7,7 @@ import logging
 from argparse import ArgumentParser 
 import sys
 
-lr=0.5
+lr=1
 p=0.1
 NEPOCH=200
 
@@ -35,7 +35,7 @@ test_datafile=args.test_file
 n_batch=args.batch_size
 vocabulary_size=args.vocab_size
 n_words_source=-1
-disp_freq=40
+disp_freq=1
 valid_freq=1000
 test_freq=2000
 save_freq=20000
@@ -73,10 +73,10 @@ def train(lr):
         error=0
         for x,x_mask,(y_node,y_choice,y_bit_mask),y_mask in train_data:
             idx+=1
-            print x.shape, x_mask.shape, y_node.shape, y_bit_mask.shape, y_choice.shape
-            print x.dtype, x_mask.dtype, y_node.dtype, y_bit_mask.dtype, y_choice.dtype
+            #print x.shape, x_mask.shape, y_node.shape, y_bit_mask.shape, y_choice.shape
+            #print x.dtype, x_mask.dtype, y_node.dtype, y_bit_mask.dtype, y_choice.dtype
             cost=model.train(x,x_mask,y_node,y_choice,y_bit_mask,y_mask,x.shape[1],lr)
-            #error+=np.sum(cost)
+            error+=np.sum(cost)
 
 
             cost=0
