@@ -1,12 +1,13 @@
 from theano.tensor.shared_randomstreams import RandomStreams
 
 from h_softmax import H_Softmax
+
 from gru import GRU
 from lstm import LSTM
 from updates import *
 
 class RNNLM(object):
-    def __init__(self,n_input,n_hidden,n_output,cell='gru',optimizer='sgd',p=0.5):
+    def __init__(self,n_input,n_hidden,n_output,cell='gru',optimizer='sgd',p=0):
         self.x=T.imatrix('batched_sequence_x')  # n_batch, maxlen
         self.x_mask=T.matrix('x_mask')
         self.y=T.imatrix('batched_sequence_y')

@@ -72,8 +72,8 @@ def prepare_data(seqs_x):
     for idx,s_x in enumerate(seqs_x):
         x[:lengths_x[idx],idx]=s_x[:-1]
         y[:lengths_x[idx],idx]=s_x[1:]
-        x_mask[:lengths_x[idx],idx]=1
-        y_mask[:lengths_x[idx],idx]=1
+        x_mask[:lengths_x[idx],idx]=1.
+        y_mask[:lengths_x[idx],idx]=1.
 
     return x,x_mask,y,y_mask
 

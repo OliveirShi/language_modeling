@@ -1,23 +1,37 @@
 import time
 from utils import *
 from grulm import GRULM
+from argparse import ArgumentParser
 
 lr=0.01
-p=0.5
-n_batch=50
+p=0
+
 NEPOCH=100
 
-n_input=50
-n_hidden=200
+n_input=20
+n_hidden=20
 maxlen=100
 cell='gru'
 optimizer='sgd'
-train_datafile='../ptb/idx_ptb.train.txt'
-valid_datafile='../ptb/idx_ptb.valid.txt'
-test_datafile='../ptb/idx_ptb.test.txt'
-vocab_freq_file='../ptb/vocab_freq.pkl'
+argument = ArgumentParser(usage='it is usage tip', description='no')
+argument.add_argument('--train_file', default='../data/ptb/idx_ptb.train.txt', type=str, help='train dir')
+argument.add_argument('--valid_file', default='../data/ptb/idx_ptb.valid.txt', type=str, help='valid dir')
+argument.add_argument('--test_file', default='../data/ptb/idx_ptb.test.txt', type=str, help='test dir')
+argument.add_argument('--vocab_size', default=10001, type=int, help='vocab size')
+argument.add_argument('--batch_size', default=10, type=int, help='batch size')
+argument.add_argument('--vocab_freq_file', default='../data/ptb/vocab_freq.pkl', type=str, help='vocab_freq')
+
+args = argument.parse_args()
+
+
+train_datafile=args.train_file
+valid_datafile=args.valid_file
+test_datafile=args.test_file
+vocabulary_size=args.vocab_size
+n_batch=args.batch_size
+vocab_freq_file=args.vocab_freq_file
 n_words_source=-1
-vocabulary_size=10001
+
 
 disp_freq=100
 sample_freq=200

@@ -3,10 +3,12 @@ import theano
 import theano.tensor as T
 
 class Softmaxlayer(object):
-    def __init__(self,X,y,maskY,shape):
+    def __init__(self,shape ,X,y,maskY):
         prefix="n_softmax_"
         self.in_size,self.out_size=shape
-        self.W=theano.shared(np.asarray((np.random.randn(shape) * 0.1),dtype=theano.config.floatX), prefix+'W')
+        self.W=theano.shared(np.asarray(np.random.uniform(low=-np.sqrt(1./self.in_size),
+                                             high=np.sqrt(1./self.in_size),
+                                             size=shape),dtype=theano.config.floatX), prefix+'W')
         self.b=theano.shared(np.asarray(np.zeros(self.out_size),dtype=theano.config.floatX),prefix+'b')
 
         self.X=X
