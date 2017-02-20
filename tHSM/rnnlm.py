@@ -63,6 +63,10 @@ class RNNLM(object):
                                    outputs=cost,
                                    updates=updates,
                                    givens={self.is_train:np.cast['int32'](1)})
+
+        self.test=theano.function(inputs=[self.x,self.x_mask,self.y_node,self.y_choice,self.y_bit_mask,self.y_mask,self.n_batch],
+                                   outputs=cost,
+                                   givens={self.is_train:np.cast['int32'](0)})
         '''
         self.predict=theano.function(inputs=[self.x,self.x_mask,self.n_batch],
                                      outputs=output_layer.prediction,

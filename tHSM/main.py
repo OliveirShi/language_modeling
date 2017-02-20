@@ -4,11 +4,13 @@ from rnnlm import *
 from utils import TextIterator,save_model
 
 import logging
-from argparse import ArgumentParser 
+from argparse import ArgumentParser
 import sys
+import numpy
+numpy.set_printoptions(threshold=numpy.nan)
 
 lr=1
-p=0.1
+p=0
 NEPOCH=200
 
 n_input=256
@@ -16,16 +18,16 @@ n_hidden=256
 cell='gru'
 optimizer='sgd'
 
-argument = ArgumentParser(usage='it is usage tip', description='no')  
+argument = ArgumentParser(usage='it is usage tip', description='no')
 argument.add_argument('--train_file', default='../data/ptb/idx_ptb.train.txt', type=str, help='train dir')
 argument.add_argument('--freqs_file',default='../data/ptb/frequenties.pkl',type=str,help='word frequenties')
 argument.add_argument('--valid_file', default='../data/ptb/idx_ptb.valid.txt', type=str, help='valid dir')
 argument.add_argument('--test_file', default='../data/ptb/idx_ptb.test.txt', type=str, help='test dir')
 argument.add_argument('--vocab_size', default=10001, type=int, help='vocab size')
-argument.add_argument('--batch_size', default=10, type=int, help='batch size')
+argument.add_argument('--batch_size', default=5, type=int, help='batch size')
 
 
-args = argument.parse_args()  
+args = argument.parse_args()
 
 
 train_datafile=args.train_file
@@ -73,13 +75,8 @@ def train(lr):
         error=0
         for x,x_mask,(y_node,y_choice,y_bit_mask),y_mask in train_data:
             idx+=1
-            #print x.shape, x_mask.shape, y_node.shape, y_bit_mask.shape, y_choice.shape
-            #print x.dtype, x_mask.dtype, y_node.dtype, y_bit_mask.dtype, y_choice.dtype
             cost=model.train(x,x_mask,y_node,y_choice,y_bit_mask,y_mask,x.shape[1],lr)
             error+=np.sum(cost)
-
-
-            cost=0
             if np.isnan(cost) or np.isinf(cost):
                 print 'NaN Or Inf detected!'
                 return -1

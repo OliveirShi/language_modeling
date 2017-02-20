@@ -51,11 +51,9 @@ class H_Softmax(object):
         # feature.dimshuffle(0,1,'x',2)
         node=T.sum(wp * self.x.dimshuffle(0,1,'x',2),axis=-1)
 
-        #log_sigmoid=-T.mean(T.log(T.nnet.sigmoid(node*choices))*mask,axis=-1)
-        log_sigmoid=T.mean(T.log(1+T.exp(-node*self.y_choice))*self.y_bit_mask,axis=-1)
-
-        cost=log_sigmoid*self.maskY   # matrix element-wise dot
-        self.activation=cost.sum()/self.maskY.sum()
+        log_sigmoid=-T.sum(T.log(T.nnet.sigmoid(node*self.y_choice))*self.y_bit_mask,axis=-1)
+        #log_sigmoid=T.mean(T.log(1+T.exp(-node*self.y_choice))*self.y_bit_mask,axis=-1)
+        self.activation=T.sum(log_sigmoid*self.maskY )/self.maskY.sum()
 
 
 
