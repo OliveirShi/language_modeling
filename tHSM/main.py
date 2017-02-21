@@ -9,7 +9,7 @@ import sys
 import numpy
 numpy.set_printoptions(threshold=numpy.nan)
 
-lr=1
+lr=0.5
 p=0
 NEPOCH=200
 
@@ -37,7 +37,7 @@ test_datafile=args.test_file
 n_batch=args.batch_size
 vocabulary_size=args.vocab_size
 n_words_source=-1
-disp_freq=1
+disp_freq=20
 valid_freq=1000
 test_freq=2000
 save_freq=20000
@@ -54,9 +54,9 @@ def pprint(name,x):
 def evaluate(test_data,model):
     cost=0
     index=0
-    for x,x_mask,y,y_mask in test_data:
+    for x,x_mask,(y_node,y_choice,y_bit_mask),y_mask in test_data:
         index+=1
-        cost+=model.test(x,x_mask,y,y_mask,x.shape[1])
+        cost+=model.test(x,x_mask,y_node,y_choice,y_bit_mask,y_mask,x.shape[1])
     return cost/index
 
 def train(lr):
