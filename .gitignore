@@ -1,7 +1,3 @@
+*.pkl
 *.pyc
-*.xml
-*.iml
-__init__.py
-
-*.pyc
-cHSM/rnnlm.pyc
+*.__init__.py

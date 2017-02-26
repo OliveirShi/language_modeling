@@ -156,4 +156,57 @@ def load_prefix(freq_file):
     return nodes,choices,bit_masks
 
 
+def build_brown_node(local_choice,maxlen):
+    count = 0
+    for col in range(maxlen):
+        pre=0
+        for row in range(len(local_choice)):
+            if len(local_choice[row])<=col:
+                continue
+            if pre==0:
+                pre=local_choice[row][col]+1
 
+            if local_choice[row][col]!=pre:
+                count+=1
+                pre=local_choice[row][col]
+
+            local_choice[row][col]=count
+
+    node=[[0]+ch[:-1] for ch in local_choice]
+    return node
+
+
+
+def load_brown_prefix(brown_path_file):
+    texts=open(brown_path_file,'r')
+    prefix=list()
+    choice=list()
+    maxlen=0
+    for line in texts:
+        try:
+            bitstr,widx,_=line.split()
+            prefix.append([1 if x=='1' else -1 for x in bitstr])
+            choice.append([1 if x=='1' else -1 for x in bitstr])
+            if len(bitstr)>=maxlen:
+                maxlen=len(bitstr)
+        except ValueError:
+            break
+
+    node=build_brown_node(prefix,maxlen)
+
+    length_x=[len(it) for it in prefix]
+    vocab_size=len(prefix)
+    nodes=np.zeros((vocab_size,maxlen),dtype='int32')
+    choices=np.zeros((vocab_size,maxlen),dtype='int32')
+    bit_masks=np.zeros((vocab_size,maxlen),dtype='float32')
+
+    for idx in range(vocab_size):
+        nodes[idx,:length_x[idx]]=node[idx]
+        choices[idx,:length_x[idx]]=choice[idx]
+        bit_masks[idx,:length_x[idx]]=1
+    return nodes,choice,bit_masks
+
+
+
+if __name__=='__main__':
+    load_brown_prefix('idx_wiki.train-c50-p1.out/paths')
